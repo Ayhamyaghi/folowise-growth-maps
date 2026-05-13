@@ -38,15 +38,15 @@ export default function Sidebar() {
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role || ""));
 
   return (
-    <aside className="w-68 border-r border-border-subtle bg-surface-sidebar flex flex-col h-full transition-all duration-500 ease-in-out shadow-[1px_0_0_0_rgba(0,0,0,0.02)]">
-      <div className="p-8 flex items-center gap-3">
+    <aside className="w-64 border-r border-border-subtle bg-surface-sidebar flex flex-col h-full transition-all duration-500 ease-in-out shadow-[1px_0_0_0_rgba(0,0,0,0.02)]">
+      <div className="p-6 flex items-center gap-3">
         <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center text-white shadow-xl shadow-brand/20">
           <LayoutGrid size={22} strokeWidth={2.5} />
         </div>
         <span className="font-display font-black text-xl tracking-tight text-text-primary">Folowise</span>
       </div>
 
-      <nav className="flex-1 px-5 space-y-1 mt-4">
+      <nav className="flex-1 px-4 space-y-0.5 mt-2">
         {filteredNavItems.map((item) => {
           const isActive = location.pathname === item.href || (item.href !== "/" && location.pathname.startsWith(item.href));
           return (
@@ -54,7 +54,7 @@ export default function Sidebar() {
               key={item.name}
               to={item.href}
               className={cn(
-                "flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all group relative overflow-hidden",
+                "flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all group relative overflow-hidden",
                 isActive 
                   ? "bg-bg-nav-active text-brand shadow-sm shadow-brand/5" 
                   : "text-text-secondary hover:bg-white hover:text-text-primary border border-transparent hover:border-border-subtle"
@@ -73,10 +73,10 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="p-8 border-t border-border-subtle space-y-8">
-        <div className="flex items-center gap-4 px-2">
+      <div className="p-6 border-t border-border-subtle space-y-6">
+        <div className="flex items-center gap-3 px-1">
           <div className="relative group">
-            <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center border border-border-subtle overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-500">
+            <div className="w-10 h-10 rounded-[1rem] bg-white flex items-center justify-center border border-border-subtle overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-500">
                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${role === "manager" ? "Manager" : "Alex Rivera"}`} alt={role === "manager" ? "Manager" : "Trainee"} className="w-full h-full object-cover" />
             </div>
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-lg shadow-emerald-500/20" />
@@ -87,9 +87,9 @@ export default function Sidebar() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           <button 
-            className="flex items-center justify-center gap-2 p-3.5 bg-white border border-border-subtle rounded-2xl text-text-tertiary hover:bg-slate-50 hover:text-brand transition-all group shadow-sm active:scale-95"
+            className="flex items-center justify-center gap-2 p-2.5 bg-white border border-border-subtle rounded-xl text-text-tertiary hover:bg-slate-50 hover:text-brand transition-all group shadow-sm active:scale-95"
             title="Help & Support"
           >
             <LifeBuoy size={20} className="group-hover:rotate-12 transition-transform" />
@@ -97,7 +97,7 @@ export default function Sidebar() {
           
           <button 
             onClick={logout}
-            className="flex items-center justify-center gap-2 p-3.5 bg-white border border-border-subtle rounded-2xl text-text-tertiary hover:bg-rose-50 hover:text-rose-500 transition-all group shadow-sm active:scale-95"
+            className="flex items-center justify-center gap-2 p-2.5 bg-white border border-border-subtle rounded-xl text-text-tertiary hover:bg-rose-50 hover:text-rose-500 transition-all group shadow-sm active:scale-95"
             title="Sign Out"
           >
             <LogOut size={20} className="group-hover:translate-x-0.5 transition-transform" />

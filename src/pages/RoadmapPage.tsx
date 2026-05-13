@@ -53,10 +53,10 @@ type ViewMode = "tree" | "list";
 
 const StatusBadge = ({ status }: { status: TopicStatus }) => {
   const configs = {
-    [TopicStatus.Completed]: { icon: CheckCircle2, color: "text-status-success", bg: "bg-bg-success", border: "border-border-subtle" },
-    [TopicStatus.InProgress]: { icon: Clock, color: "text-brand", bg: "bg-bg-brand-soft", border: "border-border-subtle" },
+    [TopicStatus.Completed]: { icon: CheckCircle2, color: "text-status-success", bg: "bg-status-success/5", border: "border-status-success/20" },
+    [TopicStatus.InProgress]: { icon: Clock, color: "text-brand", bg: "bg-brand/5", border: "border-brand/20" },
     [TopicStatus.Paused]: { icon: PauseCircle, color: "text-text-secondary", bg: "bg-surface-soft", border: "border-border-subtle" },
-    [TopicStatus.NeedsReview]: { icon: AlertCircle, color: "text-status-pending", bg: "bg-bg-pending", border: "border-border-subtle" },
+    [TopicStatus.NeedsReview]: { icon: AlertCircle, color: "text-status-pending", bg: "bg-status-pending/5", border: "border-status-pending/20" },
     [TopicStatus.NotStarted]: { icon: Circle, color: "text-text-tertiary", bg: "bg-surface-soft", border: "border-border-subtle" },
     [TopicStatus.Skipped]: { icon: Circle, color: "text-text-tertiary", bg: "bg-surface-soft", border: "border-border-subtle" },
   };
@@ -65,8 +65,8 @@ const StatusBadge = ({ status }: { status: TopicStatus }) => {
   const Icon = config.icon;
 
   return (
-    <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border", config.bg, config.color, config.border)}>
-      <Icon size={12} />
+    <div className={cn("inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border", config.bg, config.color, config.border)}>
+      <Icon size={10} strokeWidth={3} />
       {status}
     </div>
   );
@@ -83,6 +83,8 @@ const RoadmapNode = ({
   isSelected: boolean;
   isPhase?: boolean;
 }) => {
+  const isRoot = topic.id === "root";
+
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -4 }}
@@ -91,59 +93,61 @@ const RoadmapNode = ({
       className={cn(
         "group cursor-pointer relative transition-all duration-500 select-none",
         isPhase 
-          ? "w-[300px] p-8 rounded-[3rem] border-2 shadow-2xl" 
-          : "w-[240px] p-6 rounded-[2rem] border shadow-sm",
+          ? "w-[280px] p-6 rounded-[2rem] border-2 shadow-card" 
+          : "w-[220px] p-5 rounded-[1.5rem] border shadow-sm",
         isSelected 
-          ? "bg-brand text-white border-brand ring-8 ring-brand/5 z-30 shadow-elevated text-white" 
-          : topic.id === "root"
+          ? "bg-brand text-white border-brand ring-4 ring-brand/5 z-30 shadow-elevated" 
+          : isRoot
           ? "bg-text-primary text-white border-text-primary shadow-elevated"
           : cn(
-            "bg-surface-card border-border-subtle hover:border-brand/30 hover:shadow-elevated",
-            isPhase && "bg-surface-secondary shadow-card border-border-standard"
+            "bg-white border-border-subtle hover:border-brand/40 hover:shadow-elevated",
+            isPhase && "bg-surface-card shadow-card border-border-standard"
           )
       )}
     >
       <div className="flex items-center justify-between mb-4">
         <div className={cn(
           "rounded-full shadow-sm",
-          isPhase ? "w-4 h-4" : "w-2.5 h-2.5",
-          topic.status === TopicStatus.Completed ? "bg-status-success shadow-status-success/30" :
-          topic.status === TopicStatus.InProgress ? "bg-brand shadow-brand/30" :
+          isPhase ? "w-3 h-3" : "w-2 h-2",
+          topic.status === TopicStatus.Completed ? "bg-status-success shadow-status-success/40 ring-4 ring-status-success/10" :
+          topic.status === TopicStatus.InProgress ? "bg-brand shadow-brand/40 ring-4 ring-brand/10" :
           "bg-border-standard"
         )} />
         <span className={cn(
-          "font-black uppercase tracking-[0.25em] opacity-40 whitespace-nowrap",
-          isPhase ? "text-[10px]" : "text-[8px]",
-          (isSelected || topic.id === "root") ? "text-white" : "text-text-tertiary"
+          "font-black uppercase tracking-[0.25em] whitespace-nowrap",
+          isPhase ? "text-[9px]" : "text-[7px]",
+          (isSelected || isRoot) ? "opacity-60 text-white" : "opacity-40 text-text-tertiary"
         )}>
-          {topic.id === "root" ? "Global Roadmap" : isPhase ? "Strategic Phase" : "Module Core"}
+          {isRoot ? "Architecture" : isPhase ? "Phase" : "Module"}
         </span>
       </div>
 
       <h4 className={cn(
         "font-display font-black leading-tight tracking-tight",
-        isPhase ? "text-xl mb-2" : "text-[15px] mb-2",
-        (isSelected || topic.id === "root") ? "text-white" : "text-text-primary"
+        isPhase ? "text-xl mb-2" : "text-[15px] mb-1.5",
+        (isSelected || isRoot) ? "text-white" : "text-text-primary"
       )}>
         {topic.title}
       </h4>
       
       <div className="flex items-center justify-between mt-4">
         <div className={cn(
-          "text-[9px] font-black uppercase tracking-[0.15em] px-2.5 py-1 rounded-xl shadow-sm border",
-          (isSelected || topic.id === "root") 
+          "text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-lg shadow-sm border transition-all",
+          (isSelected || isRoot) 
             ? "bg-white/20 text-white border-white/20" 
             : cn(
-               "bg-surface-soft transition-colors group-hover:bg-white",
-               topic.status === TopicStatus.Completed ? "text-status-success border-border-subtle" :
-               topic.status === TopicStatus.InProgress ? "text-brand border-border-subtle" :
+               "bg-surface-soft group-hover:bg-white",
+               topic.status === TopicStatus.Completed ? "text-status-success border-status-success/20" :
+               topic.status === TopicStatus.InProgress ? "text-brand border-brand/20" :
                "text-text-tertiary border-border-subtle"
             )
         )}>
           {topic.status}
         </div>
-        {!(isSelected || topic.id === "root") && (
-          <ChevronRight size={16} className="text-text-tertiary opacity-40 group-hover:text-brand group-hover:opacity-100 transition-all group-hover:translate-x-1" />
+        {!(isSelected || isRoot) && (
+          <div className="p-1.5 bg-surface-soft rounded-lg opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
+             <ChevronRight size={12} className="text-brand" strokeWidth={3} />
+          </div>
         )}
       </div>
     </motion.div>
@@ -170,9 +174,9 @@ const TreeBranch = ({ topic, onSelect, selectedId, depth = 0 }: {
       />
       
       {hasChildren && (
-        <div className="flex gap-12 pt-24 relative">
+        <div className="flex gap-16 pt-32 relative">
           {/* Vertical line down from current node */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-24 bg-border-standard/40" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[3px] h-32 bg-border-standard" />
           
           {topic.children!.map((child, index) => {
             const isFirst = index === 0;
@@ -180,16 +184,16 @@ const TreeBranch = ({ topic, onSelect, selectedId, depth = 0 }: {
             const isOnly = topic.children?.length === 1;
             
             return (
-              <div key={child.id} className="relative pt-12">
+              <div key={child.id} className="relative pt-16">
                 {/* Horizontal connector shoulder */}
                 {!isOnly && (
                   <div className={cn(
-                    "absolute top-0 h-[2px] bg-border-standard/40",
+                    "absolute top-0 h-[3px] bg-border-standard",
                     isFirst ? "left-1/2 right-0" : isLast ? "left-0 right-1/2" : "left-0 right-0"
                   )} />
                 )}
                 {/* Visual stub to connect to the node above */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-12 bg-border-standard/40" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[3px] h-16 bg-border-standard" />
                 <TreeBranch 
                   topic={child} 
                   onSelect={onSelect} 
@@ -207,34 +211,34 @@ const TreeBranch = ({ topic, onSelect, selectedId, depth = 0 }: {
 
 const ZoomControls = ({ zoom, onZoomIn, onZoomOut, onReset }: { zoom: number, onZoomIn: () => void, onZoomOut: () => void, onReset: () => void }) => {
   return (
-    <div className="fixed bottom-10 right-10 flex flex-col gap-2 z-[60]">
-       <div className="bg-surface-card border border-border-subtle rounded-2xl p-1.5 shadow-elevated flex flex-col gap-1">
+    <div className="fixed bottom-10 right-10 flex flex-col gap-3 z-[60]">
+       <div className="bg-white border-2 border-border-standard rounded-3xl p-2 shadow-elevated flex flex-col gap-1 backdrop-blur-xl">
           <button 
             onClick={onZoomIn}
-            className="p-3 hover:bg-surface-soft rounded-xl text-text-secondary transition-colors"
+            className="p-3.5 hover:bg-surface-soft rounded-2xl text-text-secondary hover:text-brand transition-all active:scale-90"
             title="Zoom In"
           >
-            <Plus size={20} />
+            <Plus size={22} strokeWidth={2.5} />
           </button>
           <div className="h-px bg-border-subtle mx-2" />
           <button 
             onClick={onZoomOut}
-            className="p-3 hover:bg-surface-soft rounded-xl text-text-secondary transition-colors"
+            className="p-3.5 hover:bg-surface-soft rounded-2xl text-text-secondary hover:text-brand transition-all active:scale-90"
             title="Zoom Out"
           >
-            <Minus size={20} />
+            <Minus size={22} strokeWidth={2.5} />
           </button>
           <div className="h-px bg-border-subtle mx-2" />
           <button 
             onClick={onReset}
-            className="p-3 hover:bg-surface-soft rounded-xl text-text-secondary transition-colors"
+            className="p-3.5 hover:bg-surface-soft rounded-2xl text-text-secondary hover:text-brand transition-all active:scale-90"
             title="Reset View"
           >
-            <Maximize size={20} />
+            <Maximize size={22} strokeWidth={2.5} />
           </button>
        </div>
-       <div className="bg-surface-card border border-border-subtle rounded-xl py-1.5 px-3 shadow-card text-center">
-          <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">{Math.round(zoom * 100)}%</span>
+       <div className="bg-text-primary text-white rounded-2xl py-2 px-4 shadow-elevated text-center ring-4 ring-text-primary/10">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]">{Math.round(zoom * 100)}%</span>
        </div>
     </div>
   );
@@ -253,24 +257,24 @@ const ResourceIcon = ({ type }: { type: ResourceType }) => {
 
 const ViewSwitcher = ({ mode, onChange }: { mode: ViewMode; onChange: (mode: ViewMode) => void }) => {
   return (
-    <div className="flex bg-surface-soft p-1 rounded-2xl border border-border-subtle shadow-control">
+    <div className="flex bg-surface-soft p-1 rounded-xl border border-border-standard shadow-sm backdrop-blur-md">
       <button 
         onClick={() => onChange("tree")}
         className={cn(
-          "flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-          mode === "tree" ? "bg-white text-brand shadow-card" : "text-text-tertiary hover:text-text-secondary"
+          "flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300",
+          mode === "tree" ? "bg-white text-brand shadow-sm" : "text-text-tertiary hover:text-text-secondary"
         )}
       >
-        <Network size={16} /> Tree View
+        <Network size={14} strokeWidth={2.5} /> Tree View
       </button>
       <button 
         onClick={() => onChange("list")}
         className={cn(
-          "flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-          mode === "list" ? "bg-white text-brand shadow-card" : "text-text-tertiary hover:text-text-secondary"
+          "flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300",
+          mode === "list" ? "bg-white text-brand shadow-sm" : "text-text-tertiary hover:text-text-secondary"
         )}
       >
-        <List size={16} /> List View
+        <List size={14} strokeWidth={2.5} /> List View
       </button>
     </div>
   );
@@ -298,49 +302,55 @@ const ListViewRow = ({
         layout
         onClick={() => onSelect(topic)}
         className={cn(
-          "group flex items-center gap-4 py-3 px-4 rounded-2xl transition-all cursor-pointer border border-transparent",
-          isSelected ? "bg-brand/5 border-brand/20 shadow-sm" : "hover:bg-surface-soft"
+          "group flex items-center gap-6 py-5 px-6 rounded-[2rem] transition-all cursor-pointer border-2",
+          isSelected ? "bg-brand/5 border-brand/20 shadow-sm" : "border-transparent hover:bg-surface-soft hover:border-border-subtle"
         )}
-        style={{ marginLeft: `${depth * 24}px` }}
+        style={{ marginLeft: `${depth * 32}px` }}
       >
-        <div className="flex items-center gap-3 min-w-[200px]">
+        <div className="flex items-center gap-5 min-w-[280px]">
           {hasChildren ? (
             <button 
               onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-              className="p-1 hover:bg-surface-standard rounded-md transition-colors text-text-tertiary"
+              className="p-1.5 hover:bg-white rounded-lg transition-all text-brand shadow-sm border border-transparent hover:border-border-subtle"
             >
-              <ChevronDown size={16} className={cn("transition-transform duration-300", !isExpanded && "-rotate-90")} />
+              <ChevronDown size={18} strokeWidth={3} className={cn("transition-transform duration-500", !isExpanded && "-rotate-90")} />
             </button>
           ) : (
-            <div className="w-6" />
+            <div className="w-8" />
           )}
           <div className={cn(
-            "w-2 h-2 rounded-full",
-            topic.status === TopicStatus.Completed ? "bg-status-success" : 
-            topic.status === TopicStatus.InProgress ? "bg-brand" : "bg-border-standard"
+            "w-3 h-3 rounded-full ring-4 ring-opacity-20 transition-all",
+            topic.status === TopicStatus.Completed ? "bg-status-success ring-status-success" : 
+            topic.status === TopicStatus.InProgress ? "bg-brand ring-brand" : "bg-border-standard ring-transparent"
           )} />
           <h4 className={cn(
-            "text-sm font-bold tracking-tight",
-            topic.status === TopicStatus.Completed ? "text-text-secondary line-through opacity-60" : "text-text-primary"
+            "text-[15px] font-black tracking-tight transition-all",
+            topic.status === TopicStatus.Completed ? "text-text-tertiary line-through decoration-text-tertiary/40" : "text-text-primary",
+            depth === 0 && "text-lg uppercase"
           )}>
             {topic.title}
           </h4>
         </div>
 
-        <div className="flex-1 h-px bg-border-subtle opacity-40 mx-4" />
+        <div className="flex-1 h-[2px] bg-border-subtle opacity-10 mx-6" />
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
-            <Clock size={12} className="text-text-tertiary" />
-            <span className="text-[10px] font-bold text-text-tertiary">{topic.estimatedHours || 0}h</span>
+        <div className="flex items-center gap-10">
+          <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+            <Clock size={14} className="text-text-tertiary" />
+            <span className="text-[11px] font-black text-text-tertiary uppercase tracking-widest">{topic.estimatedHours || 0}H</span>
           </div>
           <StatusBadge status={topic.status} />
-          <ChevronRight size={14} className={cn("text-text-tertiary transition-transform opacity-0 group-hover:opacity-100", isSelected && "opacity-100 translate-x-1 text-brand")} />
+          <div className={cn(
+            "p-2 rounded-xl transition-all opacity-0 group-hover:opacity-100",
+            isSelected ? "bg-brand text-white opacity-100 shadow-lg shadow-brand/30" : "bg-surface-soft text-text-tertiary"
+          )}>
+            <ChevronRight size={16} strokeWidth={3} className={cn("transition-transform", isSelected && "translate-x-0.5")} />
+          </div>
         </div>
       </motion.div>
 
       {hasChildren && isExpanded && (
-        <div className="flex flex-col">
+        <div className="flex flex-col mt-2">
           {topic.children?.map(child => (
             <ListViewRow 
               key={child.id} 
@@ -384,57 +394,69 @@ const DetailPanel = ({
       animate={{ x: 0 }}
       exit={{ x: "100%" }}
       transition={{ type: "spring", damping: 30, stiffness: 300 }}
-      className="fixed top-0 right-0 h-full w-full max-w-lg bg-surface-card shadow-elevated z-[100] border-l border-border-subtle flex flex-col"
+      className="fixed top-0 right-0 h-full w-full max-w-md bg-surface-card shadow-elevated z-[100] border-l border-border-subtle flex flex-col"
     >
       {/* Header */}
-      <div className="p-6 border-b border-border-standard flex items-center justify-between">
+      <div className="p-6 border-b border-border-standard flex items-center justify-between bg-white relative z-10">
         <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-surface-soft text-text-tertiary rounded-xl border border-border-subtle">
-            <Layers size={20} />
+          <div className="p-2.5 bg-brand/5 text-brand rounded-xl border-2 border-brand/10 shadow-sm">
+            <Layers size={20} strokeWidth={2.5} />
           </div>
           <div>
-            <h3 className="text-base font-bold tracking-tight text-text-primary">Topic Intelligence</h3>
-            <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mt-0.5">Management, Resources, and Progress</p>
+            <h3 className="text-base font-black tracking-tight text-text-primary uppercase leading-none">Module IQ</h3>
+            <p className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-1.5 mb-0 opacity-60">Architectural Context</p>
           </div>
         </div>
         <button 
           onClick={onClose}
-          className="p-2 hover:bg-surface-soft rounded-xl text-text-tertiary transition-colors"
+          className="p-2.5 hover:bg-surface-soft rounded-xl text-text-tertiary hover:text-text-primary transition-all active:scale-90"
         >
-          <X size={20} />
+          <X size={20} strokeWidth={2.5} />
         </button>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar pb-32">
-        <section>
+        <section className="relative">
           <div className="flex items-center justify-between mb-4">
              <StatusBadge status={topic.status} />
              {topic.parentId && (
-               <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-tertiary uppercase tracking-widest">
-                 <ArrowRight size={10} /> Parent: {topic.parentId}
-               </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-surface-soft rounded-lg border border-border-subtle">
+                  <GitBranch size={10} className="text-brand" />
+                  <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest">{topic.parentId}</span>
+                </div>
              )}
           </div>
-          <h2 className="text-2xl font-bold text-text-primary leading-tight mb-3">
+          <h2 className="text-2xl font-display font-black text-text-primary leading-none tracking-tight mb-4">
             {topic.title}
           </h2>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            {topic.description || "No description provided for this topic yet."}
-          </p>
+          <div className="p-5 bg-surface-soft rounded-2xl border border-border-standard relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Info size={32} />
+             </div>
+             <p className="text-sm font-medium text-text-secondary leading-relaxed relative z-10">
+               {topic.description || "No strategic objectives defined for this module yet."}
+             </p>
+          </div>
         </section>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-surface-secondary border border-border-subtle p-4 rounded-2xl">
-            <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-widest block mb-1">Estimated Effort</span>
-            <div className="text-lg font-bold text-text-primary">
-               {topic.estimatedHours || 0} <span className="text-xs font-medium text-text-tertiary">h</span>
+          <div className="bg-white border border-border-standard p-4 rounded-2xl shadow-sm hover:shadow-card transition-all">
+            <div className="flex items-center gap-1.5 mb-2">
+               <Clock size={12} className="text-brand" />
+               <span className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.2em]">Curriculum Effort</span>
+            </div>
+            <div className="text-xl font-display font-black text-text-primary">
+               {topic.estimatedHours || 0} <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest ml-0.5">Hrs</span>
             </div>
           </div>
-          <div className="bg-surface-secondary border border-border-subtle p-4 rounded-2xl">
-            <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-widest block mb-1">Status Alignment</span>
-            <div className="text-xs font-bold text-text-secondary">
-               {topic.lastActivity || "Freshly synced"}
+          <div className="bg-white border border-border-standard p-4 rounded-2xl shadow-sm hover:shadow-card transition-all">
+            <div className="flex items-center gap-1.5 mb-2">
+               <Target size={12} className="text-status-success" />
+               <span className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.2em]">Latest Sync</span>
+            </div>
+            <div className="text-[11px] font-black text-text-secondary uppercase tracking-widest">
+               {topic.lastActivity || "System Defined"}
             </div>
           </div>
         </div>
@@ -442,10 +464,13 @@ const DetailPanel = ({
         {/* Resources Section */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-bold text-text-primary uppercase tracking-widest">Learning Resources</h3>
+            <div className="flex items-center gap-2">
+               <Library size={14} className="text-brand" />
+               <h3 className="text-[10px] font-black text-text-primary uppercase tracking-[0.2em]">Resources</h3>
+            </div>
             <button 
               onClick={() => onAddResource(topic)}
-              className="text-[10px] font-bold text-brand uppercase tracking-widest hover:underline"
+              className="px-3 py-1.5 bg-brand/5 text-brand text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-brand/10 transition-all border border-brand/10"
             >
               + Add Resource
             </button>
@@ -458,77 +483,83 @@ const DetailPanel = ({
                   href={res.url} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="group flex flex-col p-4 bg-surface-secondary rounded-2xl border border-border-subtle hover:border-brand/40 transition-all"
+                  className="group flex flex-col p-4 bg-white rounded-2xl border border-border-standard hover:border-brand/40 transition-all shadow-sm"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2 text-brand">
-                      <ResourceIcon type={res.type} />
-                      <span className="text-xs font-bold">{res.title}</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3 text-brand">
+                      <div className="p-2 bg-brand/5 rounded-lg group-hover:bg-brand group-hover:text-white transition-all">
+                        <ResourceIcon type={res.type} />
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-tight">{res.title}</span>
                     </div>
-                    <ExternalLink size={12} className="text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ExternalLink size={12} className="text-text-tertiary opacity-0 group-hover:opacity-100 transition-all" />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-medium text-text-tertiary">Added by {res.addedBy} • {res.addedDate}</span>
+                  <div className="flex items-center justify-between pt-3 border-t border-border-subtle/40">
+                    <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest">By {res.addedBy}</span>
+                    <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest">{res.addedDate}</span>
                   </div>
                 </a>
               ))
             ) : (
-              <div className="p-8 border-2 border-dashed border-border-subtle rounded-3xl flex flex-col items-center justify-center text-center">
-                 <Library size={24} className="text-text-tertiary opacity-20 mb-3" />
-                 <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">No resources curated yet</p>
+              <div className="p-8 border border-dashed border-border-standard rounded-2xl flex flex-col items-center justify-center text-center bg-surface-soft/30">
+                 <div className="p-3 bg-white rounded-2xl shadow-sm border border-border-subtle mb-3 opacity-40">
+                    <Library size={24} strokeWidth={1.5} className="text-text-tertiary" />
+                 </div>
+                 <p className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.2em]">No resources defined</p>
               </div>
             )}
           </div>
         </section>
 
-        {/* Hierarchical sub-topics list removed - hierarchy is now visual in the tree */}
-
         {/* Management Matrix */}
-        <div className="pt-6 border-t border-border-subtle space-y-4">
-          <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">Matrix Controls</h3>
+        <div className="pt-8 border-t border-border-standard space-y-4">
+          <div className="flex items-center gap-2">
+             <Settings size={14} className="text-text-tertiary" />
+             <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em]">Execution Matrix</h3>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <button 
               onClick={() => onEdit(topic)}
-              className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-subtle hover:border-brand rounded-xl font-bold text-[10px] transition-all text-text-secondary"
+              className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-standard hover:border-brand hover:bg-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all text-text-secondary hover:text-brand active:scale-95 shadow-sm"
             >
-              <Edit3 size={14} /> {isManager ? "EDIT TOPIC" : "REQUEST EDIT"}
+              <Edit3 size={14} /> {isManager ? "EDIT" : "PROPOSE EDIT"}
             </button>
             <button 
               onClick={() => onDelete(topic)}
-              className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-subtle hover:border-rose-500 hover:text-rose-500 rounded-xl font-bold text-[10px] transition-all text-text-secondary"
+              className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-standard hover:border-rose-500 hover:text-rose-500 hover:bg-rose-50 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all text-text-secondary active:scale-95 shadow-sm"
             >
-              <Trash2 size={14} /> {isManager ? "DELETE" : "REQUEST DELETE"}
+              <Trash2 size={14} /> {isManager ? "DELETE" : "PROPOSE DEL"}
             </button>
             <button 
               onClick={() => onMove(topic)}
-              className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-subtle hover:border-brand rounded-xl font-bold text-[10px] transition-all text-text-secondary"
+              className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-standard hover:border-brand hover:bg-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all text-text-secondary hover:text-brand active:scale-95 shadow-sm"
             >
-              <GitBranch size={14} /> {isManager ? "MOVE NODE" : "REQUEST MOVE"}
+              <GitBranch size={14} /> {isManager ? "RE-PARENT" : "PROPOSE MOVE"}
             </button>
             <button 
               onClick={() => onCopy(topic)}
-              className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-subtle hover:border-brand rounded-xl font-bold text-[10px] transition-all text-text-secondary"
+              className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-standard hover:border-brand hover:bg-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all text-text-secondary hover:text-brand active:scale-95 shadow-sm"
             >
-              <Copy size={14} /> {isManager ? "REUSE BRANCH" : "COPY BRANCH"}
+              <Copy size={14} /> {isManager ? "REPLICATE" : "COPY"}
             </button>
           </div>
           <button 
             onClick={() => onAddSub(topic)}
-            className="flex items-center justify-center gap-2 w-full py-4 bg-brand/5 border border-brand/20 hover:bg-brand/10 text-brand rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all"
+            className="flex items-center justify-center gap-2 w-full py-3.5 bg-brand/5 border border-brand/20 hover:bg-brand/10 text-brand rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all active:scale-98 shadow-sm"
           >
-            <Plus size={16} /> {isManager ? "ADD CHILD TOPIC" : "REQUEST CHILD"}
+            <PlusCircle size={18} strokeWidth={3} /> {isManager ? "ATTACH CHILD MODULE" : "PROPOSE CHILD"}
           </button>
         </div>
       </div>
 
       {/* Floating Action Bar */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-border-standard">
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-border-standard flex flex-col gap-4 z-20">
          <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 py-4 bg-brand text-white rounded-2xl font-bold text-xs shadow-lg shadow-brand/20 hover:brightness-110 transition-all">
-              <CheckCircle2 size={16} /> {isManager ? "SYNC COMPLETION" : "MARK COMPLETE"}
+            <button className="flex items-center justify-center gap-2 py-4 bg-brand text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-brand/30 hover:brightness-110 active:scale-95 transition-all">
+              <CheckCircle2 size={18} strokeWidth={3} /> {isManager ? "SYNC" : "COMPLETE"}
             </button>
-            <button className="flex items-center justify-center gap-2 py-4 bg-surface-soft text-text-secondary rounded-2xl font-bold text-xs hover:bg-surface-secondary transition-all">
-              <MessageSquare size={16} /> ADD LOG
+            <button className="flex items-center justify-center gap-2 py-4 bg-surface-soft text-text-secondary rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white border border-transparent hover:border-border-subtle transition-all active:scale-95 shadow-sm">
+              <MessageSquare size={18} strokeWidth={2.5} /> FEEDBACK
             </button>
          </div>
       </div>
@@ -634,74 +665,80 @@ export default function RoadmapPage() {
   return (
     <div className="h-screen flex flex-col bg-background-app overflow-hidden transition-colors duration-500">
       {/* Top Header */}
-      <header className="shrink-0 bg-white border-b border-border-subtle px-10 py-6 flex items-center justify-between relative z-50 shadow-card transition-colors duration-500">
-        <div className="flex items-center gap-8">
+      <header className="shrink-0 bg-white border-b border-border-subtle px-8 py-4 flex items-center justify-between relative z-50 shadow-sm transition-all">
+        <div className="flex items-center gap-6">
           {!isTrainee && (
             <>
-              <Link to="/trainees" className="p-3 hover:bg-surface-soft rounded-2xl border border-transparent hover:border-border-subtle transition-all text-text-tertiary">
-                <ArrowLeft size={22} strokeWidth={2.5} />
+              <Link to="/trainees" className="p-2.5 hover:bg-surface-soft rounded-xl border border-transparent hover:border-border-subtle transition-all text-text-tertiary shadow-sm active:scale-90">
+                <ArrowLeft size={20} strokeWidth={3} />
               </Link>
-              <div className="h-10 w-[1px] bg-border-standard" />
+              <div className="h-8 w-[1px] bg-border-standard opacity-50" />
             </>
           )}
-          <div className="flex items-center gap-5">
-             <div className="w-14 h-14 rounded-2xl border-4 border-white overflow-hidden shadow-xl ring-1 ring-slate-100">
-                <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover" />
+          <div className="flex items-center gap-4">
+             <div className="w-12 h-12 rounded-xl p-0.5 bg-white border border-border-standard shadow-lg ring-4 ring-brand/5">
+                <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover rounded-[0.55rem]" />
              </div>
-              <div>
-                <h1 className="text-lg font-display font-black text-text-primary leading-none uppercase tracking-tight">
-                   {isTrainee ? "My Roadmap" : trainee.name}
+              <div className="space-y-0.5">
+                <h1 className="text-lg font-display font-black text-text-primary leading-tight uppercase tracking-tight">
+                   {isTrainee ? "Strategic Roadmap" : trainee.name}
                 </h1>
-                <p className="text-[11px] font-black text-brand tracking-[0.25em] mt-2.5 opacity-80">{trainee.specialization.toUpperCase()} SPECIALIZATION</p>
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse shadow-sm shadow-brand" />
+                  <p className="text-[9px] font-black text-brand tracking-[0.3em] uppercase opacity-70">{trainee.specialization}</p>
+                </div>
              </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-12">
-           <div className="flex items-center gap-8">
-              <div className="flex flex-col items-end">
-                 <span className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mb-2 leading-none opacity-60">Path Mastery</span>
-                 <span className="text-2xl font-display font-black text-brand leading-none">{trainee.progress}%</span>
+        <div className="flex items-center gap-10">
+           <div className="flex items-center gap-6">
+              <div className="flex flex-col items-end gap-1">
+                 <span className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.3em] opacity-60">Mastery</span>
+                 <div className="flex items-baseline gap-1">
+                   <span className="text-2xl font-display font-black text-text-primary leading-none tracking-tighter">{trainee.progress}</span>
+                   <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">%</span>
+                 </div>
               </div>
-              <div className="w-40 h-3 bg-slate-50 rounded-full overflow-hidden shadow-inner border border-slate-100 p-0.5">
+              <div className="w-32 h-2.5 bg-surface-soft rounded-full overflow-hidden border border-border-standard shadow-inner">
                  <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${trainee.progress}%` }}
-                    className="h-full bg-brand rounded-full shadow-lg shadow-brand/30"
+                    className="h-full bg-brand rounded-full shadow-md shadow-brand/40"
                  />
               </div>
            </div>
-           <button className="px-8 py-4 bg-brand text-white rounded-2xl text-[11px] font-black tracking-[0.2em] uppercase hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-brand/30">
-              {isTrainee ? "Export Path" : "Audit Curriculum"}
+           <button className="px-6 py-3 bg-brand text-white rounded-xl text-[10px] font-black tracking-[0.25em] uppercase hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-brand/20">
+              {isTrainee ? "EXPORT" : "AUDIT"}
            </button>
         </div>
       </header>
 
       {/* Roadmap Toolbar (Global Actions) */}
-      <div className="shrink-0 bg-white border-b border-border-subtle px-10 py-4 flex items-center justify-between z-40 shadow-card">
+      <div className="shrink-0 bg-surface-soft/40 backdrop-blur-xl border-b border-border-subtle px-8 py-3 flex items-center justify-between z-40 relative shadow-sm">
         <div className="flex items-center gap-6">
           <ViewSwitcher mode={viewMode} onChange={setViewMode} />
-          <div className="h-8 w-px bg-border-standard" />
+          <div className="h-8 w-[1px] bg-border-standard opacity-40 mx-1" />
           <button 
             onClick={() => openActionModal("add", virtualRoot)}
-            className="flex items-center gap-3 px-6 py-3 bg-brand text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-brand-hover transition-all shadow-card shadow-brand/20 active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 bg-brand text-white rounded-xl text-[10px] font-black uppercase tracking-[0.25em] hover:bg-brand-hover transition-all shadow-lg shadow-brand/10 active:scale-95"
           >
-            <Plus size={18} strokeWidth={3} /> {isTrainee ? "REQUEST ADD" : "ADD TOPIC"}
+            <PlusCircle size={16} strokeWidth={3} /> {isTrainee ? "ADD" : "ARCHITECT"}
           </button>
         </div>
         
         <div className="flex items-center gap-6">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-brand transition-colors" size={18} strokeWidth={2.5} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-brand transition-all" size={16} strokeWidth={3} />
             <input 
               type="text" 
-              placeholder="QUICK LOOKUP..." 
-              className="pl-12 pr-6 py-3 bg-surface-soft border border-border-subtle rounded-[1.25rem] text-[11px] font-black uppercase tracking-[0.2em] focus:ring-4 focus:ring-brand/[0.03] focus:border-brand/30 focus:bg-white outline-none w-80 transition-all shadow-control group-hover:border-border-standard"
+              placeholder="SEARCH..." 
+              className="pl-10 pr-6 py-2.5 bg-white border border-border-standard rounded-xl text-[11px] font-black uppercase tracking-[0.2em] outline-none w-64 transition-all shadow-sm focus:border-brand/40"
             />
           </div>
-          <div className="h-8 w-[1px] bg-border-standard" />
-          <button className="p-3 hover:bg-surface-soft rounded-2xl text-text-tertiary transition-all hover:text-text-primary bg-surface-soft/50 border border-transparent hover:border-border-standard">
-            <Settings size={22} />
+          <div className="h-8 w-[1px] bg-border-standard opacity-40 mx-1" />
+          <button className="p-2.5 bg-white hover:bg-surface-soft rounded-xl text-text-tertiary transition-all border border-border-standard shadow-sm active:scale-90">
+            <Settings size={20} strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -837,178 +874,183 @@ export default function RoadmapPage() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden border border-border-subtle"
+              className="bg-white w-full max-w-lg rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.2)] relative z-10 overflow-hidden border-4 border-border-standard"
             >
-              <div className="p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="p-3 bg-brand/5 text-brand rounded-2xl">
-                    {activeModal === "add" ? <Plus size={24} /> : 
-                     activeModal === "edit" ? <Edit3 size={24} /> : 
-                     activeModal === "delete" ? <Trash2 size={24} /> :
-                     activeModal === "move" ? <GitBranch size={24} /> :
-                     activeModal === "copy" ? <Copy size={24} /> :
-                     <Library size={24} />}
+              <div className="p-12">
+                <div className="flex items-center gap-6 mb-10">
+                  <div className="p-4 bg-brand/5 text-brand rounded-[1.5rem] border-2 border-brand/10 shadow-sm">
+                    {activeModal === "add" ? <PlusCircle size={32} strokeWidth={2.5} /> : 
+                     activeModal === "edit" ? <Edit3 size={32} strokeWidth={2.5} /> : 
+                     activeModal === "delete" ? <Trash2 size={32} strokeWidth={2.5} /> :
+                     activeModal === "move" ? <GitBranch size={32} strokeWidth={2.5} /> :
+                     activeModal === "copy" ? <Copy size={32} strokeWidth={2.5} /> :
+                     <Library size={32} strokeWidth={2.5} />}
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold tracking-tight text-text-primary uppercase">
-                      {activeModal === "delete" ? "Confirm Deletion" : 
-                       activeModal === "edit" ? "Edit Module" : 
-                       activeModal === "move" ? "Move Module" :
-                       activeModal === "copy" ? "Reuse Branch" :
-                       activeModal === "resource" ? "Add Resource" :
-                       "Add Training Topic"}
+                    <h3 className="text-2xl font-display font-black tracking-tight text-text-primary uppercase leading-tight">
+                      {activeModal === "delete" ? "Security Protocol" : 
+                       activeModal === "edit" ? "Modify Node" : 
+                       activeModal === "move" ? "Migration Orchestration" :
+                       activeModal === "copy" ? "Pattern Replication" :
+                       activeModal === "resource" ? "Knowledge Asset" :
+                       "Architect Node"}
                     </h3>
-                    <p className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mt-1">
-                      {activeModal === "delete" ? "Critical Structural Update" : "Curriculum Synchronization"}
+                    <p className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.3em] mt-2 opacity-60">
+                      {activeModal === "delete" ? "Irreversible curriculum erasure" : "Curriculum Synchronization Service"}
                     </p>
                   </div>
                 </div>
 
                 {activeModal === "delete" ? (
-                  <div className="space-y-4">
-                    <div className="p-6 bg-rose-50 rounded-3xl border border-rose-100">
-                      <p className="text-sm text-rose-900 leading-relaxed">
+                  <div className="space-y-8">
+                    <div className="p-8 bg-rose-50 rounded-[2rem] border-2 border-rose-100/50 shadow-inner">
+                      <p className="text-[15px] font-medium text-rose-900 leading-relaxed">
                         Are you sure you want to remove <span className="font-bold underline">{modalContext?.title}</span>?
                       </p>
-                      <p className="text-[11px] font-medium text-rose-700/70 mt-2">
-                        This will permanently erase this node and all of its {modalContext?.children?.length || 0} sub-modules. This action cannot be undone.
+                      <p className="text-[11px] font-black text-rose-700/60 uppercase tracking-widest mt-4">
+                        DANGER: Erases node and {modalContext?.children?.length || 0} sub-modules permanently.
                       </p>
                     </div>
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-4">
                       <button 
                         onClick={() => setActiveModal(null)}
-                        className="flex-1 py-4 bg-surface-soft text-text-secondary font-bold text-sm rounded-2xl border border-border-subtle hover:bg-surface-secondary transition-all"
+                        className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard hover:bg-white transition-all active:scale-95 shadow-sm"
                       >
-                        CANCEL
+                        CLOSE
                       </button>
                       <button 
                         onClick={() => setActiveModal(null)}
-                        className="flex-1 py-4 bg-rose-500 text-white font-bold text-sm rounded-2xl shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all"
+                        className="flex-1 py-5 bg-rose-500 text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-rose-500/30 hover:brightness-110 active:scale-95 transition-all border-b-4 border-rose-600"
                       >
-                        CONFIRM DELETE
+                        EXECUTE DELETE
                       </button>
                     </div>
                   </div>
                 ) : activeModal === "move" ? (
-                  <div className="space-y-5">
-                    <p className="text-xs text-text-secondary leading-relaxed">
-                      Select a new destination parent for <span className="font-bold text-text-primary">{modalContext?.title}</span>. The hierarchy and all children will be preserved during the transition.
+                  <div className="space-y-8">
+                    <p className="text-[13px] font-medium text-text-secondary leading-relaxed">
+                      Select a strategic destination for <span className="font-bold text-text-primary">"{modalContext?.title}"</span>. Child nodes and metadata will remain intact.
                     </p>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest ml-1">Current Position</label>
-                        <div className="p-4 bg-surface-soft border border-border-subtle rounded-2xl text-xs font-bold text-text-tertiary truncate">
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Origin Context</label>
+                        <div className="p-5 bg-surface-soft border-2 border-border-standard rounded-[1.25rem] text-[11px] font-black text-text-tertiary truncate uppercase tracking-widest opacity-60">
                           {getBreadcrumbs(modalContext?.id || "")}
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest ml-1">Target Parent Module</label>
-                        <div className="relative">
-                           <select className="w-full appearance-none px-5 py-4 bg-white border border-border-subtle rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-brand/20 transition-all pr-12">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Target Parent Module</label>
+                        <div className="relative group">
+                           <select className="w-full appearance-none px-6 py-5 bg-white border-2 border-border-standard rounded-[1.5rem] text-sm font-black text-text-primary outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all pr-14 shadow-sm group-hover:border-border-subtle cursor-pointer">
                               {getFilteredNodes(modalContext?.id).map(t => (
                                 <option key={t.id} value={t.id}>{t.title}</option>
                               ))}
                            </select>
-                           <ChevronDown size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
+                           <ChevronDown size={20} strokeWidth={3} className="absolute right-6 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none group-focus-within:text-brand" />
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-3 pt-4">
-                       <button onClick={() => setActiveModal(null)} className="flex-1 py-4 bg-surface-soft text-text-secondary font-bold text-sm rounded-2xl border border-border-subtle">CANCEL</button>
-                       <button onClick={() => setActiveModal(null)} className="flex-1 py-4 bg-brand text-white font-bold text-sm rounded-2xl shadow-xl shadow-brand/20">CONFIRM MOVE</button>
+                    <div className="flex gap-4 pt-4">
+                       <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard shadow-sm active:scale-95 transition-all hover:bg-white">CANCEL</button>
+                       <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-brand/30 border-b-4 border-brand-hover active:scale-95 transition-all">MIGRATE NODE</button>
                     </div>
                   </div>
                 ) : activeModal === "resource" ? (
-                  <div className="space-y-5">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest ml-1">Resource Title</label>
-                        <input type="text" placeholder="e.g. Master Class: Spring Security" className="w-full px-5 py-4 bg-surface-soft border border-border-subtle rounded-2xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
+                  <div className="space-y-8">
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Identifier</label>
+                        <input type="text" placeholder="Title of the asset..." className="w-full px-6 py-5 bg-surface-soft border-2 border-border-standard rounded-[1.5rem] text-sm font-black outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all focus:bg-white shadow-sm" />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest ml-1">Resource Type</label>
-                        <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Asset Category</label>
+                        <div className="grid grid-cols-2 gap-3">
                            {Object.values(ResourceType).map(type => (
-                             <button key={type} className="px-4 py-2 bg-surface-soft border border-border-subtle rounded-xl text-[10px] font-bold text-text-secondary hover:border-brand hover:text-brand transition-all">{type}</button>
+                             <button key={type} className="px-5 py-4 bg-surface-soft border-2 border-border-standard rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest text-text-secondary hover:border-brand hover:text-brand transition-all shadow-sm active:scale-95">{type}</button>
                            ))}
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest ml-1">URL / Link</label>
-                        <input type="text" placeholder="https://..." className="w-full px-5 py-4 bg-surface-soft border border-border-subtle rounded-2xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Strategic URL</label>
+                        <div className="relative group">
+                          <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-text-tertiary" size={16} />
+                          <input type="text" placeholder="https://external-asset.io/..." className="w-full pl-14 pr-6 py-5 bg-surface-soft border-2 border-border-standard rounded-[1.5rem] text-sm font-medium outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all focus:bg-white shadow-sm" />
+                        </div>
                       </div>
                     </div>
-                    <div className="flex gap-3 pt-2">
-                       <button onClick={() => setActiveModal(null)} className="flex-1 py-4 bg-surface-soft text-text-secondary font-bold text-sm rounded-2xl border border-border-subtle">ABORT</button>
-                       <button onClick={() => setActiveModal(null)} className="flex-1 py-4 bg-brand text-white font-bold text-sm rounded-2xl shadow-xl shadow-brand/20">ADD RESOURCE</button>
+                    <div className="flex gap-4">
+                       <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard shadow-sm active:scale-95 transition-all animate-pulse">ABORT</button>
+                       <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-brand/30 border-b-4 border-brand-hover active:scale-95 transition-all">LINK KNOWLEDGE</button>
                     </div>
                   </div>
                 ) : activeModal === "copy" ? (
-                   <div className="space-y-5">
-                      <p className="text-sm text-text-secondary leading-relaxed">
-                        You are about to duplicate the <span className="font-bold text-text-primary">"{modalContext?.title}"</span> branch. This will create a fresh copy of this branch at the current level, including all resources and sub-topics.
+                   <div className="space-y-8">
+                      <p className="text-[13px] font-medium text-text-secondary leading-relaxed">
+                        Replicating strategic pattern: <span className="font-bold text-text-primary">"{modalContext?.title}"</span>. This will instantiate a new branch context with inherited sub-structures.
                       </p>
-                      <div className="p-4 bg-brand/5 border border-brand/10 rounded-2xl">
-                         <div className="flex items-center gap-3">
-                            <Copy size={16} className="text-brand" />
-                            <span className="text-[11px] font-bold text-brand uppercase tracking-widest">Branch duplication active</span>
+                      <div className="p-6 bg-brand/5 border-2 border-brand/10 rounded-[1.75rem] shadow-sm">
+                         <div className="flex items-center gap-4">
+                            <div className="p-2 bg-brand text-white rounded-lg">
+                               <Copy size={16} strokeWidth={3} />
+                            </div>
+                            <span className="text-[10px] font-black text-brand uppercase tracking-[0.25em]">Ready for replication</span>
                          </div>
                       </div>
-                      <div className="flex gap-3 pt-4">
-                        <button onClick={() => setActiveModal(null)} className="flex-1 py-4 border border-border-subtle text-text-secondary font-bold text-sm rounded-2xl hover:bg-surface-soft">CANCEL</button>
-                        <button onClick={() => setActiveModal(null)} className="flex-1 py-4 bg-brand text-white font-bold text-sm rounded-2xl shadow-xl shadow-brand/20">REUSE BRANCH</button>
+                      <div className="flex gap-4">
+                        <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard shadow-sm hover:bg-white active:scale-95 transition-all">ABORT</button>
+                        <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-brand/30 border-b-4 border-brand-hover active:scale-95 transition-all">REPLICATE BRANCH</button>
                       </div>
                    </div>
                 ) : (
-                  <div className="space-y-5">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest ml-1">Topic Title</label>
-                      <input 
-                        type="text" 
-                        defaultValue={activeModal === "edit" ? modalContext?.title : ""}
-                        placeholder="e.g. Advanced System Design"
-                        className="w-full px-5 py-4 bg-surface-soft border border-border-subtle rounded-2xl text-sm font-bold text-text-primary outline-none focus:ring-2 focus:ring-brand/20 transition-all hover:border-border-standard focus:bg-white"
-                      />
+                  <div className="space-y-8">
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Module Title</label>
+                        <input 
+                          type="text" 
+                          defaultValue={activeModal === "edit" ? modalContext?.title : ""}
+                          placeholder="e.g. Distributed Consensus Systems"
+                          className="w-full px-7 py-5 bg-surface-soft border-2 border-border-standard rounded-[1.75rem] text-[15px] font-black text-text-primary outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all shadow-sm focus:bg-white"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                         <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Architectural Rationale</label>
+                         <textarea 
+                          defaultValue={activeModal === "edit" ? modalContext?.description : ""}
+                          placeholder="Define the strategic objectives for this phase..."
+                          rows={4}
+                          className="w-full px-7 py-5 bg-surface-soft border-2 border-border-standard rounded-[1.75rem] text-sm font-medium text-text-secondary outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all shadow-sm resize-none focus:bg-white"
+                         />
+                      </div>
+                      {activeModal === "add" && (
+                         <div className="space-y-3">
+                            <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Anchor Context</label>
+                            <div className="relative group">
+                               <select 
+                                 defaultValue={modalContext?.id}
+                                 className="w-full appearance-none px-7 py-5 bg-white border-2 border-border-standard rounded-[1.75rem] text-sm font-black text-brand outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all pr-14 shadow-sm group-hover:border-border-subtle cursor-pointer"
+                               >
+                                  {allTopics.map(t => (
+                                     <option key={t.id} value={t.id}>{t.title}</option>
+                                  ))}
+                               </select>
+                               <ChevronDown size={20} strokeWidth={3} className="absolute right-7 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none group-focus-within:text-brand" />
+                            </div>
+                         </div>
+                      )}
                     </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest ml-1">Curriculum Rationale</label>
-                       <textarea 
-                        defaultValue={activeModal === "edit" ? modalContext?.description : ""}
-                        placeholder="Define learning outcomes and professional scope..."
-                        rows={3}
-                        className="w-full px-5 py-4 bg-surface-soft border border-border-subtle rounded-2xl text-sm font-medium text-text-secondary outline-none focus:ring-2 focus:ring-brand/20 resize-none hover:border-border-standard focus:bg-white"
-                       />
-                    </div>
-                    {activeModal === "add" && (
-                       <div className="space-y-4">
-                          <div className="space-y-2">
-                             <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest ml-1">Parent Module</label>
-                             <div className="relative">
-                                <select 
-                                  defaultValue={modalContext?.id}
-                                  className="w-full appearance-none px-5 py-4 bg-surface-soft border border-border-subtle rounded-2xl text-sm font-bold text-brand outline-none focus:ring-2 focus:ring-brand/20 transition-all pr-12"
-                                >
-                                   {allTopics.map(t => (
-                                      <option key={t.id} value={t.id}>{t.title}</option>
-                                   ))}
-                                </select>
-                                <ChevronDown size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none" />
-                             </div>
-                          </div>
-                       </div>
-                    )}
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex gap-4">
                       <button 
                         onClick={() => setActiveModal(null)}
-                        className="flex-1 py-4 border border-border-subtle text-text-secondary font-bold text-sm rounded-2xl hover:bg-surface-soft transition-all"
+                        className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard shadow-sm hover:bg-white active:scale-95 transition-all"
                       >
                         ABORT
                       </button>
                       <button 
                         onClick={() => setActiveModal(null)}
-                        className="flex-1 py-4 bg-brand text-white font-bold text-sm rounded-2xl shadow-xl shadow-brand/20 hover:brightness-110 active:scale-95 transition-all"
+                        className="flex-1 py-5 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-brand/30 border-b-4 border-brand-hover active:scale-95 transition-all"
                       >
-                        {activeModal === "edit" ? (role === "manager" ? "SAVE CHANGES" : "REQUEST SAVE") : (role === "manager" ? "ADD TO ROADMAP" : "SUBMIT PROPOSAL")}
+                        {activeModal === "edit" ? (role === "manager" ? "SAVE CHANGES" : "PROPOSE CHANGES") : (role === "manager" ? "COMMIT TO PATH" : "SUBMIT PROPOSAL")}
                       </button>
                     </div>
                   </div>
