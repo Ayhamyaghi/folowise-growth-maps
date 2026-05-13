@@ -11,6 +11,7 @@ import {
   User, 
   Mail, 
   Key, 
+  Check,
   MoreHorizontal,
   ChevronRight,
   Search,
@@ -34,107 +35,112 @@ export default function AccountsPage() {
 
 function ManagerAccountsView() {
   return (
-    <div className="space-y-8 max-w-5xl mx-auto transition-colors duration-500">
+    <div className="space-y-10 max-w-6xl mx-auto pb-20 px-4 md:px-0">
       <header className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-display font-bold tracking-tight">Accounts</h1>
-          <p className="text-slate-500 dark:text-zinc-400 mt-1">Platform credentials and institutional roles</p>
+          <h1 className="text-4xl font-display font-black tracking-tight text-text-primary">Accounts</h1>
+          <p className="text-text-secondary mt-2 text-sm font-medium">Platform credentials and institutional roles</p>
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 bg-brand text-white rounded-2xl text-sm font-bold hover:bg-brand-dark transition-all shadow-lg shadow-brand/20">
-          <UserPlus size={18} /> Add Account
+        <button className="flex items-center gap-3 px-8 py-4 bg-brand text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-brand/30">
+          <UserPlus size={20} strokeWidth={3} /> Add Entry
         </button>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-         <div className="bg-brand text-white p-7 rounded-[2rem] shadow-xl shadow-brand/20 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform duration-700">
-               <Shield size={100} />
+         <div className="bg-surface-secondary text-text-primary p-8 rounded-[2.5rem] shadow-card relative overflow-hidden group border border-border-standard">
+            <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:rotate-12 transition-transform duration-1000 pointer-events-none">
+               <Shield size={140} />
             </div>
-            <div className="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center mb-5 backdrop-blur-md">
-               <Fingerprint size={22} />
+            <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-brand/5 blur-[100px] rounded-full pointer-events-none" />
+            
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-6 border border-border-subtle shadow-control">
+               <Fingerprint size={24} className="text-brand" />
             </div>
-            <h3 className="text-lg font-bold mb-1 font-display">Manager Account</h3>
-            <p className="text-[10px] uppercase font-black tracking-widest opacity-60 mb-6">System Administration</p>
-            <div className="flex items-center gap-4 bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-               <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20">
-                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Manager" alt="Admin" />
+            <h3 className="text-2xl font-display font-black mb-1 text-text-primary">Manager Account</h3>
+            <p className="text-[11px] uppercase font-black tracking-[0.3em] text-text-tertiary mb-8 opacity-60">Full Access Authority</p>
+            <div className="flex items-center gap-5 bg-white p-5 rounded-2xl border border-border-subtle shadow-sm hover:shadow-card transition-all duration-500">
+               <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-card">
+                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Manager" alt="Admin" className="w-full h-full object-cover" />
                </div>
                <div className="flex-1">
-                  <p className="text-xs font-bold font-display uppercase tracking-tight">Administrator</p>
-                  <p className="text-[10px] opacity-70">management@folowise.io</p>
+                  <p className="text-base font-display font-black uppercase tracking-tight text-text-primary">System Admin</p>
+                  <p className="text-[11px] font-bold text-text-tertiary tracking-wider">management@folowise.io</p>
                </div>
-               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                  <Key size={16} />
+               <button className="p-2.5 hover:bg-bg-brand-soft rounded-xl transition-colors text-brand" title="Manage Security">
+                  <Key size={18} />
                </button>
             </div>
          </div>
 
-         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-7 rounded-[2rem] shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:rotate-12 transition-transform duration-700">
-               <User size={100} />
+         <div className="bg-white border border-border-subtle p-8 rounded-[2.5rem] shadow-xl shadow-black/[0.02] relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:rotate-12 transition-transform duration-1000 pointer-events-none">
+               <User size={140} />
             </div>
-            <div className="w-11 h-11 bg-slate-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-5 border border-slate-200 dark:border-zinc-700">
-               <Users size={22} className="text-slate-400" />
+            <div className="w-12 h-12 bg-surface-soft rounded-xl flex items-center justify-center mb-6 border border-border-subtle shadow-control ring-4 ring-bg-brand-soft/20">
+               <Users size={24} className="text-brand" />
             </div>
-            <h3 className="text-lg font-bold mb-1 font-display">Trainee Accounts</h3>
-            <p className="text-sm text-slate-500 dark:text-zinc-500 font-medium mb-6">Total trainee accounts: {mockTrainees.length}</p>
-            <div className="flex -space-x-2">
+            <h3 className="text-2xl font-display font-black mb-1 text-text-primary">Trainee Accounts</h3>
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-text-tertiary mb-8 opacity-60">Provisioned Seats: {mockTrainees.length}/100</p>
+            <div className="flex -space-x-3 mb-2">
                {mockTrainees.slice(0, 5).map((t, i) => (
-                  <div key={i} className="w-9 h-9 rounded-full border-4 border-white dark:border-zinc-900 overflow-hidden shadow-md">
-                     <img src={t.avatar} alt={t.name} />
+                  <div key={i} className="w-10 h-10 rounded-xl border-4 border-white overflow-hidden shadow-xl shadow-black/[0.05] ring-1 ring-slate-100 bg-white">
+                     <img src={t.avatar} alt={t.name} className="w-full h-full object-cover" />
                   </div>
                ))}
-               <div className="w-9 h-9 rounded-full border-4 border-white dark:border-zinc-900 bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-slate-500">
+               <div className="w-10 h-10 rounded-xl border-4 border-white bg-slate-50/50 flex items-center justify-center text-[10px] font-black text-text-tertiary ring-1 ring-slate-100 shadow-xl">
                   +{mockTrainees.length - 5}
                </div>
             </div>
          </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-[2rem] overflow-hidden shadow-sm">
-         <div className="p-6 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center">
-            <h3 className="text-base font-bold font-display uppercase tracking-tight">Active Trainee Accounts</h3>
-            <div className="flex gap-3">
-               <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="text" placeholder="Search accounts..." className="pl-9 pr-3 py-1.5 bg-slate-50 dark:bg-zinc-800 border-none rounded-xl text-[10px] font-bold focus:ring-1 focus:ring-brand" />
+      <div className="bg-white border border-border-subtle rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/[0.03]">
+         <div className="p-8 border-b border-border-subtle flex justify-between items-center bg-surface-soft">
+            <h3 className="text-[11px] font-black font-display uppercase tracking-[0.4em] text-text-tertiary opacity-60">Active Directory</h3>
+            <div className="flex gap-4">
+               <div className="relative group">
+                  <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-brand transition-colors" />
+                  <input type="text" placeholder="QUICK SEARCH..." className="pl-13 pr-6 py-2.5 bg-white border border-border-subtle rounded-xl text-[11px] font-black uppercase tracking-[0.2em] focus:outline-none focus:ring-4 focus:ring-bg-brand-soft/30 focus:border-brand/30 transition-all shadow-control w-72 group-hover:border-border-standard" />
                </div>
             </div>
          </div>
-         <div className="divide-y divide-slate-100 dark:divide-zinc-800">
+         <div className="divide-y divide-border-subtle">
             {mockTrainees.map((trainee) => (
-               <div key={trainee.id} className="p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors group">
-                  <div className="flex items-center gap-4">
-                     <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-zinc-800 overflow-hidden border border-slate-200 dark:border-zinc-700 grayscale group-hover:grayscale-0 transition-all">
-                        <img src={trainee.avatar} alt={trainee.name} />
+               <div key={trainee.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-all group">
+                  <div className="flex items-center gap-5">
+                     <div className="w-12 h-12 rounded-xl bg-white overflow-hidden border border-border-subtle group-hover:scale-105 transition-all shadow-xl shadow-black/[0.02] relative ring-4 ring-transparent group-hover:ring-brand/[0.03]">
+                        <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover" />
                      </div>
                      <div>
-                        <h4 className="text-sm font-bold tracking-tight">{trainee.name}</h4>
-                        <div className="flex items-center gap-2 mt-0.5">
-                           <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 lowercase flex items-center gap-1">
-                              <Mail size={10} /> {trainee.email}
+                        <h4 className="text-lg font-display font-black tracking-tight text-text-primary group-hover:text-brand transition-colors">{trainee.name}</h4>
+                        <div className="flex items-center gap-4 mt-1.5">
+                           <span className="text-[11px] font-bold text-text-tertiary lowercase flex items-center gap-2 opacity-60">
+                              <Mail size={13} className="text-brand opacity-60" /> {trainee.email}
                            </span>
-                           <span className="w-1 h-1 bg-slate-300 dark:bg-zinc-700 rounded-full" />
-                           <span className="text-[9px] font-black text-brand uppercase tracking-widest leading-none">{trainee.specialization}</span>
+                           <span className="w-1 h-1 bg-border-subtle rounded-full" />
+                           <span className="text-[10px] font-black text-brand uppercase tracking-[0.2em] leading-none bg-bg-brand-soft px-3 py-1 rounded-xl border border-border-subtle">{trainee.specialization}</span>
                         </div>
                      </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                     <button className="p-2.5 text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors" title="Reset Password">
+                  <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                     <button className="p-3 text-text-tertiary hover:text-amber-500 hover:bg-amber-50/50 border border-transparent hover:border-amber-100 rounded-xl transition-all shadow-sm hover:shadow-amber-500/10" title="Rotate Cipher">
                         <Key size={18} />
                      </button>
-                     <button className="p-2.5 text-slate-300 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Delete Account">
+                     <button className="p-3 text-text-tertiary hover:text-rose-500 hover:bg-rose-50/50 border border-transparent hover:border-rose-100 rounded-xl transition-all shadow-sm hover:shadow-rose-500/10" title="Suspend Authority">
                         <Trash2 size={18} />
                      </button>
-                     <button className="p-2.5 text-slate-300 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors">
-                        <ChevronRight size={18} />
+                     <div className="w-[1px] h-6 bg-border-subtle mx-1" />
+                     <button className="p-3 text-text-tertiary hover:text-text-primary hover:bg-white border border-transparent hover:border-border-subtle rounded-xl transition-all shadow-sm active:scale-95">
+                        <ChevronRight size={18} strokeWidth={3} />
                      </button>
                   </div>
                </div>
             ))}
          </div>
-         <div className="p-6 bg-slate-50 dark:bg-zinc-800/20 text-center">
-            <button className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.3em] hover:text-brand transition-colors">Load Archive Accounts</button>
+         <div className="p-10 bg-slate-50/30 text-center border-t border-border-subtle">
+            <button className="text-[11px] font-black text-text-tertiary uppercase tracking-[0.5em] hover:text-brand transition-all flex items-center gap-4 mx-auto opacity-40 hover:opacity-100">
+               <Shield size={18} /> Load Strategic Identity Records
+            </button>
          </div>
       </div>
     </div>
@@ -145,100 +151,120 @@ function TraineeAccountsView() {
   const me = mockTrainees[0]; // Prototope user Alex Rivera
   
    return (
-    <div className="space-y-8 max-w-4xl mx-auto transition-colors duration-500 pb-20">
+    <div className="space-y-12 max-w-5xl mx-auto pb-24 px-4 md:px-0">
       <header>
-        <h1 className="text-3xl font-display font-bold tracking-tight">Account Settings</h1>
-        <p className="text-slate-500 dark:text-zinc-400 mt-1">Manage your identity and account preferences</p>
+        <h1 className="text-4xl font-display font-black tracking-tight text-text-primary">Account Identity</h1>
+        <p className="text-text-secondary mt-2 text-sm font-medium">Manage your credentials and platform presence</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-1 space-y-6">
-           <div className="card-elevation bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-[2rem] p-8 text-center shadow-sm">
-               <div className="w-32 h-32 rounded-[1.5rem] border-4 border-white dark:border-zinc-800 shadow-xl overflow-hidden mx-auto mb-6">
-                 <img src={me.avatar} alt={me.name} className="w-full h-full object-cover" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-1 space-y-8">
+           <div className="card-elevation bg-white border border-border-subtle rounded-[2.5rem] p-9 text-center shadow-xl shadow-black/[0.02]">
+               <div className="w-28 h-28 rounded-[2rem] border-4 border-white shadow-2xl overflow-hidden mx-auto mb-8 relative group ring-1 ring-slate-100">
+                  <img src={me.avatar} alt={me.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-brand/60 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center backdrop-blur-sm">
+                     <User size={24} className="text-white scale-75 group-hover:scale-100 transition-transform" />
+                  </div>
               </div>
-              <h2 className="text-xl font-bold tracking-tight">{me.name}</h2>
-              <p className="text-[9px] font-black text-brand uppercase tracking-[0.2em] mt-1.5">{me.specialization} Trainee</p>
+              <h2 className="text-2xl font-display font-black tracking-tight text-text-primary">{me.name}</h2>
+              <p className="text-[10px] font-black text-brand uppercase tracking-[0.4em] mt-3 bg-brand/[0.03] inline-block px-4 py-1.5 rounded-xl border border-brand/5 shadow-sm">{me.specialization} Unit</p>
               
-              <div className="mt-8 pt-8 border-t border-slate-100 dark:border-zinc-800">
-                 <div className="flex justify-between items-center mb-1">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Roadmap Progress</span>
-                    <span className="text-[9px] font-black text-brand uppercase">{me.progress}%</span>
+              <div className="mt-9 pt-9 border-t border-border-subtle text-left">
+                 <div className="flex justify-between items-center mb-2.5">
+                    <span className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.3em] opacity-40">Milestone Progress</span>
+                    <span className="text-[10px] font-black text-brand uppercase tracking-widest">{me.progress}%</span>
                  </div>
-                 <div className="w-full h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-brand" style={{ width: `${me.progress}%` }} />
+                 <div className="w-full h-2.5 bg-slate-50 rounded-full overflow-hidden shadow-inner border border-slate-100 p-0.5">
+                    <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${me.progress}%` }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                        className="h-full bg-brand rounded-full shadow-lg shadow-brand/30" 
+                    />
                  </div>
               </div>
            </div>
 
-           <div className="bg-brand text-white p-6 rounded-3xl shadow-lg shadow-brand/20 relative overflow-hidden">
-              <div className="absolute -right-4 -bottom-4 opacity-10">
-                 <Shield size={80} />
-              </div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-80 text-white">Role</h4>
-              <p className="text-sm font-bold">Trainee Account</p>
-              <p className="text-[10px] mt-4 font-medium opacity-60 leading-relaxed">Verified account managed by Folowise Manager.</p>
-           </div>
+            <div className="bg-surface-secondary text-text-primary p-8 rounded-[2rem] shadow-card relative overflow-hidden group border border-border-standard">
+               <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:rotate-12 transition-transform duration-1000 pointer-events-none">
+                  <Shield size={140} />
+               </div>
+               <h4 className="text-[10px] font-black uppercase tracking-[0.4em] mb-3 text-brand opacity-60">Institutional Role</h4>
+               <p className="text-lg font-display font-black uppercase text-text-primary">Standard Trainee</p>
+               <div className="w-10 h-1 bg-brand/20 rounded-full mt-6" />
+               <p className="text-xs mt-6 font-bold text-text-secondary leading-relaxed italic tracking-tight">"Verified identity account protected by Folowise System Architecture."</p>
+            </div>
         </div>
 
-         <div className="md:col-span-2 space-y-6">
-           <div className="card-elevation bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-[2rem] p-8 shadow-sm">
-              <h3 className="text-lg font-bold font-display mb-6">Profile Information</h3>
+         <div className="lg:col-span-2 space-y-8">
+           <div className="card-elevation bg-white border border-border-subtle rounded-[2.5rem] p-9 shadow-xl shadow-black/[0.02]">
+              <h3 className="text-xl font-display font-black mb-8 text-text-primary uppercase tracking-tight">Profile Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                 <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Email Address</label>
-                    <p className="text-sm font-bold text-slate-800 dark:text-zinc-200">{me.email}</p>
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.3em] flex items-center gap-3 opacity-60">
+                        <Mail size={16} className="text-brand opacity-60" /> Primary Email
+                    </label>
+                    <p className="text-lg font-black text-text-primary tracking-tight">{me.email}</p>
                  </div>
-                 <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Specialization</label>
-                    <p className="text-sm font-bold text-slate-800 dark:text-zinc-200">{me.specialization}</p>
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.3em] flex items-center gap-3 opacity-60">
+                        <Shield size={16} className="text-brand opacity-60" /> Unit Authority
+                    </label>
+                    <p className="text-lg font-black text-text-primary tracking-tight">{me.specialization}</p>
                  </div>
-                 <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Account Status</label>
-                    <p className="text-sm font-bold text-emerald-500 uppercase tracking-wide">Active</p>
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.3em] flex items-center gap-3 opacity-60">
+                        <Check size={16} className="text-brand opacity-60" /> Account Status
+                    </label>
+                    <div className="flex items-center gap-3 bg-emerald-50 w-fit px-4 py-2 rounded-xl border border-emerald-100">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        <p className="text-[11px] font-black text-emerald-600 uppercase tracking-widest leading-none">Strategic Active</p>
+                    </div>
                  </div>
-                 <div className="space-y-1">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Trainee ID</label>
-                    <p className="text-sm font-bold text-brand">{me.id.toUpperCase()}-001</p>
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.3em] flex items-center gap-3 opacity-60">
+                        <Fingerprint size={16} className="text-brand opacity-60" /> Secure UID
+                    </label>
+                    <p className="text-lg font-black text-brand tracking-tighter">{me.id.toUpperCase()}-001-FLOW</p>
                  </div>
               </div>
            </div>
 
-           <div className="card-elevation bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-[2rem] p-8 shadow-sm">
-              <h3 className="text-lg font-bold font-display mb-6 flex items-center gap-3">
-                 <Fingerprint size={20} className="text-brand" /> Security Settings
+           <div className="card-elevation bg-white border border-border-subtle rounded-[2.5rem] p-9 shadow-xl shadow-black/[0.02]">
+              <h3 className="text-xl font-display font-black mb-8 flex items-center gap-5 text-text-primary uppercase tracking-tight">
+                 <Key size={28} className="text-brand" /> Governance & Security
               </h3>
-              <div className="space-y-6">
-                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl border border-slate-100 dark:border-zinc-800/60">
-                    <div className="flex gap-4">
-                       <div className="p-2.5 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800">
-                          <Key size={18} className="text-slate-400" />
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between p-6 bg-slate-50/50 rounded-[2.25rem] border border-border-subtle hover:bg-white hover:shadow-xl hover:shadow-black/[0.02] transition-all group">
+                    <div className="flex gap-5">
+                       <div className="w-13 h-13 bg-white rounded-2xl shadow-xl shadow-black/[0.02] border border-border-subtle flex items-center justify-center group-hover:scale-110 transition-transform duration-500 ring-4 ring-slate-50/50">
+                          <Key size={24} className="text-brand" />
                        </div>
                        <div>
-                          <p className="text-xs font-bold">Password Management</p>
-                          <p className="text-[10px] text-slate-400 font-medium">Last modification: 4 months ago</p>
+                          <p className="text-base font-display font-black text-text-primary leading-tight mb-1.5 uppercase tracking-tight">Cipher Management</p>
+                          <p className="text-[10px] text-text-tertiary font-black uppercase tracking-[0.2em] opacity-60">Credential rotation: 120 Days ago</p>
                        </div>
                     </div>
-                    <button className="text-[10px] font-black text-brand uppercase tracking-widest px-4 py-2 hover:bg-brand/5 rounded-lg transition-colors">Modify</button>
+                    <button className="text-[10px] font-black text-brand uppercase tracking-[0.3em] px-6 py-3 bg-brand/[0.03] hover:bg-brand/10 border border-brand/5 focus:ring-4 focus:ring-brand/5 rounded-xl transition-all shadow-sm active:scale-95">Rotate</button>
                  </div>
                  
-                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl border border-slate-100 dark:border-zinc-800/60 opacity-60 grayscale">
-                    <div className="flex gap-4">
-                       <div className="p-2.5 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-800">
-                          <Shield size={18} className="text-slate-400" />
+                 <div className="flex items-center justify-between p-6 bg-slate-50/50 rounded-[2.25rem] border border-border-subtle opacity-40 grayscale group cursor-not-allowed">
+                    <div className="flex gap-5">
+                       <div className="w-13 h-13 bg-white rounded-2xl shadow-sm border border-border-subtle flex items-center justify-center">
+                          <Shield size={24} className="text-text-tertiary" />
                        </div>
                        <div>
-                          <p className="text-xs font-bold">Two-Factor Authentication</p>
-                          <p className="text-[10px] text-slate-400 font-medium">Provisioning required by admin</p>
+                          <p className="text-base font-display font-black text-text-primary leading-tight mb-1.5 uppercase tracking-tight opacity-60">Biometric Authority</p>
+                          <p className="text-[10px] text-text-tertiary font-black uppercase tracking-[0.2em] opacity-40">Institutional clearance required</p>
                        </div>
                     </div>
-                    <button className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4 py-2 cursor-not-allowed">Disabled</button>
+                    <div className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.4em] px-6 py-3 bg-slate-100 rounded-xl opacity-40">Restricted</div>
                  </div>
               </div>
            </div>
            
-           <div className="text-center pt-4">
-               <button className="text-[10px] font-black text-slate-300 dark:text-zinc-600 uppercase tracking-[0.4em] hover:text-rose-500 transition-colors">Request Account Deprovisioning</button>
+           <div className="text-center pt-10">
+                <button className="text-[11px] font-black text-text-tertiary uppercase tracking-[0.6em] hover:text-rose-500 hover:tracking-[0.7em] transition-all duration-700 opacity-40 hover:opacity-100">Relinquish Strategic Entry Authority</button>
            </div>
         </div>
       </div>

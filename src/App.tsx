@@ -25,21 +25,6 @@ import AccountsPage from "./pages/AccountsPage";
 // Components
 import Sidebar from "./components/Sidebar";
 
-// Theme Types & Context
-type Theme = "light" | "dark";
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error("useTheme must be used within a ThemeProvider");
-  return context;
-};
-
 // Auth Context (Pseudo-auth for prototype)
 type Role = "manager" | "trainee" | null;
 interface AuthContextType {
@@ -61,9 +46,9 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   
   return (
-    <div className="flex h-screen bg-surface-50 text-surface-text overflow-hidden font-sans transition-colors duration-500">
+    <div className="flex h-screen bg-background-app text-text-primary overflow-hidden font-sans">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto relative p-4 md:p-8 lg:p-10">
+      <main className="flex-1 overflow-y-auto relative p-4 md:p-8 lg:p-10 custom-scrollbar">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -88,21 +73,10 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 };
 
 export default function App() {
-  const [theme, setTheme] = useState<Theme>("dark");
   const [role, setRole] = useState<Role>(null);
 
-  const toggleTheme = () => {
-    setTheme(prev => {
-      const newTheme = prev === "light" ? "dark" : "light";
-      return newTheme;
-    });
-  };
   const login = (newRole: Role) => setRole(newRole);
   const logout = () => setRole(null);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-  }, [theme]);
 
   // Handle default font loading (Recipe 1 & 11 vibe)
   useEffect(() => {
@@ -113,25 +87,23 @@ export default function App() {
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <AuthContext.Provider value={{ role, login, logout }}>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            
-            <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-            <Route path="/trainees" element={<ProtectedRoute><TraineesPage /></ProtectedRoute>} />
-            <Route path="/trainee/:id" element={<ProtectedRoute><TraineeProfilePage /></ProtectedRoute>} />
-            <Route path="/roadmap/:id" element={<ProtectedRoute><RoadmapPage /></ProtectedRoute>} />
-            <Route path="/requests" element={<ProtectedRoute><RequestsPage /></ProtectedRoute>} />
-            <Route path="/activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
-            <Route path="/accounts" element={<ProtectedRoute><AccountsPage /></ProtectedRoute>} />
-            
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </AuthContext.Provider>
-    </ThemeContext.Provider>
+    <AuthContext.Provider value={{ role, login, logout }}>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          
+          <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/trainees" element={<ProtectedRoute><TraineesPage /></ProtectedRoute>} />
+          <Route path="/trainee/:id" element={<ProtectedRoute><TraineeProfilePage /></ProtectedRoute>} />
+          <Route path="/roadmap/:id" element={<ProtectedRoute><RoadmapPage /></ProtectedRoute>} />
+          <Route path="/requests" element={<ProtectedRoute><RequestsPage /></ProtectedRoute>} />
+          <Route path="/activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
+          <Route path="/accounts" element={<ProtectedRoute><AccountsPage /></ProtectedRoute>} />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthContext.Provider>
   );
 }
 

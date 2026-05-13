@@ -20,6 +20,26 @@ export enum TopicStatus {
   NeedsReview = "Needs Review",
 }
 
+export enum ResourceType {
+  YouTube = "YouTube",
+  Article = "Article",
+  Course = "Course",
+  Documentation = "Documentation",
+  GitHub = "GitHub",
+  Notes = "Notes",
+  Other = "Other",
+}
+
+export interface Resource {
+  id: string;
+  title: string;
+  type: ResourceType;
+  url?: string;
+  note?: string;
+  addedBy: string;
+  addedDate: string;
+}
+
 export interface RoadmapTopic {
   id: string;
   title: string;
@@ -29,6 +49,8 @@ export interface RoadmapTopic {
   children?: RoadmapTopic[];
   estimatedHours?: number;
   lastActivity?: string;
+  parentId?: string;
+  resources?: Resource[];
 }
 
 export interface Trainee {
@@ -129,128 +151,94 @@ export const mockTrainees: Trainee[] = [
 export const mockRoadmap: RoadmapTopic[] = [
   {
     id: "p1",
-    title: "Programming Foundation",
+    title: "Engineering Foundation",
     status: TopicStatus.Completed,
-    isCountable: true,
+    isCountable: false,
     description: "The essential foundations for modern software development, focusing on core logic and basic toolsets.",
     estimatedHours: 40,
     lastActivity: "2 weeks ago",
     children: [
-      { id: "r1-1", title: "Java Fundamentals", status: TopicStatus.Completed, isCountable: true, description: "Mastering Java syntax, JVM architecture, and basic language constructs." },
-      { id: "r1-2", title: "Object Oriented Programming", status: TopicStatus.Completed, isCountable: true, description: "Deep dive into classes, inheritance, polymorphism, and encapsulation." },
-      { id: "r1-3", title: "Collections Framework", status: TopicStatus.Completed, isCountable: true, description: "Efficient data handling with Lists, Sets, and Maps." },
-      { id: "r1-4", title: "Git Basics", status: TopicStatus.Completed, isCountable: true, description: "Version control essentials, branching, and collaboration." },
+      { 
+        id: "r1-1", 
+        title: "Language Core", 
+        status: TopicStatus.Completed, 
+        isCountable: true, 
+        description: "Mastering language syntax and core constructs.",
+        children: [
+          { id: "r1-1-1", title: "Java Fundamentals", status: TopicStatus.Completed, isCountable: true, resources: [
+            { id: "res1", title: "Java 21 Deep Dive", type: ResourceType.YouTube, url: "https://youtube.com/watch?v=java21", addedBy: "Manager", addedDate: "May 1, 2026" }
+          ]},
+          { id: "r1-1-2", title: "OOP Principles", status: TopicStatus.Completed, isCountable: true }
+        ]
+      },
+      { id: "r1-2", title: "Version Control", status: TopicStatus.Completed, isCountable: true, children: [
+        { id: "r1-2-1", title: "Git Basics", status: TopicStatus.Completed, isCountable: true },
+        { id: "r1-2-2", title: "GitHub Workflow", status: TopicStatus.Completed, isCountable: true }
+      ]},
     ],
   },
   {
     id: "p2",
-    title: "Backend Development",
+    title: "Backend Architecture",
     status: TopicStatus.InProgress,
-    isCountable: true,
-    description: "Building robust, scalable server-side applications using modern frameworks and best practices.",
+    isCountable: false,
+    description: "Building robust, scalable server-side applications using modern frameworks.",
     estimatedHours: 120,
     lastActivity: "Yesterday",
     children: [
       { 
         id: "r2-main", 
-        title: "Spring Boot Ecosystem", 
+        title: "Spring Boot Mastery", 
         status: TopicStatus.InProgress, 
         isCountable: true,
-        description: "The primary framework for enterprise-grade Java applications.",
+        description: "The primary framework for enterprise-grade applications.",
         children: [
           { 
             id: "r2-1", 
-            title: "REST APIs", 
+            title: "API Design", 
             status: TopicStatus.Completed, 
             isCountable: true,
-            description: "Designing and implementing standard RESTful web services.",
             children: [
-              { id: "r2-1-1", title: "Controllers", status: TopicStatus.Completed, isCountable: true, description: "Handling HTTP requests and routing." },
-              { id: "r2-1-2", title: "Request Mapping", status: TopicStatus.Completed, isCountable: true, description: "Advanced URL routing and path variables." },
-              { id: "r2-1-3", title: "Response Structure", status: TopicStatus.Completed, isCountable: true, description: "Standardizing API responses and DTOs." },
-              { id: "r2-1-4", title: "Status Codes", status: TopicStatus.Completed, isCountable: true, description: "Correct use of HTTP status codes for various scenarios." },
+              { id: "r2-1-1", title: "RESTful Standards", status: TopicStatus.Completed, isCountable: true },
+              { id: "r2-1-2", title: "Documentation (OpenAPI)", status: TopicStatus.Completed, isCountable: true, resources: [
+                 { id: "res2", title: "Swagger Documentation", type: ResourceType.Documentation, url: "https://swagger.io", addedBy: "Alex Rivera", addedDate: "May 12, 2026" }
+              ]}
             ]
           },
           { 
             id: "r2-2", 
-            title: "Validation", 
+            title: "Data Persistence", 
             status: TopicStatus.InProgress, 
             isCountable: true,
-            description: "Ensuring data integrity and robust error handling at the entry point.",
             children: [
-              { id: "r2-2-1", title: "Bean Validation", status: TopicStatus.InProgress, isCountable: true },
-              { id: "r2-2-2", title: "Validation Annotations", status: TopicStatus.InProgress, isCountable: true },
-              { id: "r2-2-3", title: "Custom Validators", status: TopicStatus.NotStarted, isCountable: true },
+              { id: "r2-2-1", title: "Spring Data JPA", status: TopicStatus.InProgress, isCountable: true },
+              { id: "r2-2-2", title: "Database Migration (Flyway)", status: TopicStatus.NotStarted, isCountable: true }
             ]
-          },
-          { 
-            id: "r2-3", 
-            title: "Spring Data JPA", 
-            status: TopicStatus.InProgress, 
-            isCountable: true,
-            description: "Seamless database interaction and ORM mapping.",
-            children: [
-              { id: "r2-3-1", title: "Entities", status: TopicStatus.InProgress, isCountable: true },
-              { id: "r2-3-2", title: "Repositories", status: TopicStatus.InProgress, isCountable: true },
-              { id: "r2-3-3", title: "Relationships", status: TopicStatus.NotStarted, isCountable: true },
-              { id: "r2-3-4", title: "Transactions", status: TopicStatus.NotStarted, isCountable: true },
-            ]
-          },
+          }
         ]
       },
     ],
   },
   {
-    id: "p3",
-    title: "Security & Production",
-    status: TopicStatus.NotStarted,
-    isCountable: true,
-    description: "Hardening applications and ensuring production-ready reliability and security.",
-    children: [
-      { id: "p3-1", title: "Spring Security", status: TopicStatus.NotStarted, isCountable: true, description: "Authentication and authorization frameworks.", children: [
-        { id: "p3-1-1", title: "Authentication", status: TopicStatus.NotStarted, isCountable: true },
-        { id: "p3-1-2", title: "JWT", status: TopicStatus.NotStarted, isCountable: true },
-        { id: "p3-1-3", title: "Role-Based Authorization", status: TopicStatus.NotStarted, isCountable: true },
-      ] },
-      { id: "p3-2", title: "Error Handling", status: TopicStatus.NotStarted, isCountable: true },
-      { id: "p3-3", title: "Monitoring", status: TopicStatus.NotStarted, isCountable: true },
-    ],
-  },
-  {
     id: "p4",
-    title: "Kotlin Transition",
+    title: "Frontend Integration",
     status: TopicStatus.NotStarted,
-    isCountable: true,
-    description: "Modernizing the stack with Kotlin for better productivity and safety.",
+    isCountable: false,
+    description: "Modernizing the stack with polished user interfaces.",
     children: [
-      { id: "r4-1", title: "Kotlin Syntax", status: TopicStatus.NotStarted, isCountable: true },
-      { id: "r4-2", title: "Null Safety", status: TopicStatus.NotStarted, isCountable: true },
-      { id: "r4-3", title: "Coroutines", status: TopicStatus.NotStarted, isCountable: true },
-    ],
-  },
-  {
-    id: "p5",
-    title: "AI-Assisted Development",
-    status: TopicStatus.NotStarted,
-    isCountable: true,
-    description: "Leveraging generative AI to accelerate development and improve code quality.",
-    children: [
-      { id: "r3-1", title: "Claude Code", status: TopicStatus.NotStarted, isCountable: true },
-      { id: "r3-2", title: "AI Code Review", status: TopicStatus.NotStarted, isCountable: true },
-      { id: "r3-3", title: "Refactoring with AI", status: TopicStatus.NotStarted, isCountable: true },
-    ],
-  },
-  {
-    id: "p6",
-    title: "Production Readiness",
-    status: TopicStatus.NotStarted,
-    isCountable: true,
-    description: "Final checks and balances before the application goes live in a high-stakes environment.",
-    children: [
-      { id: "p6-1", title: "Testing", status: TopicStatus.NotStarted, isCountable: true },
-      { id: "p6-2", title: "Logging", status: TopicStatus.NotStarted, isCountable: true },
-      { id: "p6-3", title: "Deployment Basics", status: TopicStatus.NotStarted, isCountable: true },
-      { id: "p6-4", title: "Performance Review", status: TopicStatus.NotStarted, isCountable: true },
+      { 
+        id: "r4-1", 
+        title: "React Framework", 
+        status: TopicStatus.NotStarted, 
+        isCountable: true,
+        children: [
+          { id: "r4-1-1", title: "State Management", status: TopicStatus.NotStarted, isCountable: true },
+          { id: "r4-1-2", title: "Hooks & Lifecycle", status: TopicStatus.NotStarted, isCountable: true }
+        ]
+      },
+      { id: "r4-2", title: "Styling Systems", status: TopicStatus.NotStarted, isCountable: true, children: [
+        { id: "r4-2-1", title: "Tailwind CSS", status: TopicStatus.NotStarted, isCountable: true }
+      ]},
     ],
   },
 ];

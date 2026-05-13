@@ -12,12 +12,11 @@ import {
   Activity, 
   UserCog, 
   LogOut,
-  Moon,
-  Sun,
-  LayoutGrid
+  LayoutGrid,
+  LifeBuoy
 } from "lucide-react";
 import { cn } from "../lib/utils";
-import { useAuth, useTheme } from "../App";
+import { useAuth } from "../App";
 import { motion } from "motion/react";
 
 const navItems = [
@@ -35,20 +34,19 @@ const navItems = [
 export default function Sidebar() {
   const location = useLocation();
   const { role, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role || ""));
 
   return (
-    <aside className="w-64 border-r border-slate-200/60 dark:border-zinc-800/60 bg-surface-100 flex flex-col h-full transition-all duration-500 ease-in-out">
+    <aside className="w-68 border-r border-border-subtle bg-surface-sidebar flex flex-col h-full transition-all duration-500 ease-in-out shadow-[1px_0_0_0_rgba(0,0,0,0.02)]">
       <div className="p-8 flex items-center gap-3">
-        <div className="w-9 h-9 bg-brand rounded-xl flex items-center justify-center text-white shadow-[0_8px_16px_-4px_rgba(99,102,241,0.4)]">
-          <LayoutGrid size={20} />
+        <div className="w-10 h-10 bg-brand rounded-xl flex items-center justify-center text-white shadow-xl shadow-brand/20">
+          <LayoutGrid size={22} strokeWidth={2.5} />
         </div>
-        <span className="font-display font-bold text-xl tracking-tight text-slate-900 dark:text-white">Folowise</span>
+        <span className="font-display font-black text-xl tracking-tight text-text-primary">Folowise</span>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1 mt-2">
+      <nav className="flex-1 px-5 space-y-1 mt-4">
         {filteredNavItems.map((item) => {
           const isActive = location.pathname === item.href || (item.href !== "/" && location.pathname.startsWith(item.href));
           return (
@@ -56,13 +54,13 @@ export default function Sidebar() {
               key={item.name}
               to={item.href}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all group relative overflow-hidden",
+                "flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all group relative overflow-hidden",
                 isActive 
-                  ? "bg-brand/5 text-brand shadow-[inset_0_1px_1px_rgba(99,102,241,0.05)] border border-brand/10" 
-                  : "text-slate-400 dark:text-zinc-500 hover:bg-surface-50 dark:hover:bg-zinc-800/40 hover:text-slate-800 dark:hover:text-zinc-200 border border-transparent"
+                  ? "bg-bg-nav-active text-brand shadow-sm shadow-brand/5" 
+                  : "text-text-secondary hover:bg-white hover:text-text-primary border border-transparent hover:border-border-subtle"
               )}
             >
-              <item.icon size={19} className={cn(isActive ? "text-brand" : "group-hover:text-slate-900 dark:group-hover:text-zinc-200 transition-colors")} />
+              <item.icon size={18} strokeWidth={isActive ? 2.5 : 2} className={cn(isActive ? "text-brand" : "text-text-tertiary group-hover:text-text-primary transition-colors")} />
               {item.name}
               {isActive && (
                 <motion.div 
@@ -75,34 +73,34 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="p-6 border-t border-slate-100 dark:border-zinc-800/60 space-y-6">
-        <div className="flex items-center gap-3.5 px-2 py-1">
-          <div className="relative">
-            <div className="w-11 h-11 rounded-xl bg-surface-50 dark:bg-zinc-800 flex items-center justify-center border border-surface-200 dark:border-zinc-700 overflow-hidden shadow-sm">
-               <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${role === "manager" ? "Manager" : "Trainee"}`} alt={role === "manager" ? "Manager" : "Trainee"} className="w-full h-full object-cover" />
+      <div className="p-8 border-t border-border-subtle space-y-8">
+        <div className="flex items-center gap-4 px-2">
+          <div className="relative group">
+            <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center border border-border-subtle overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-500">
+               <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${role === "manager" ? "Manager" : "Alex Rivera"}`} alt={role === "manager" ? "Manager" : "Trainee"} className="w-full h-full object-cover" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-surface-100 dark:border-[#0c0c0e] rounded-full" />
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-lg shadow-emerald-500/20" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-slate-900 dark:text-zinc-100 truncate tracking-tight uppercase">{role === "manager" ? "Manager" : "Trainee"}</p>
-            <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-600 truncate tracking-wide mt-0.5">{role === "manager" ? "manager@folowise.io" : "trainee@folowise.io"}</p>
+            <p className="text-xs font-bold text-text-primary truncate tracking-tight uppercase leading-tight">{role === "manager" ? "Manager" : "Alex Rivera"}</p>
+            <p className="text-[10px] font-black text-text-tertiary truncate tracking-widest mt-1 opacity-70 uppercase">{role === "manager" ? "Administration" : "Engineering"}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-3">
           <button 
-            onClick={toggleTheme}
-            className="flex items-center justify-center gap-2 p-3 bg-surface-50 dark:bg-zinc-900 border border-surface-200 dark:border-zinc-800 rounded-xl text-slate-400 dark:text-zinc-500 hover:bg-surface-100 dark:hover:bg-zinc-800 transition-all group shadow-sm active:scale-95"
-            title={theme === "light" ? "Switch to Dark" : "Switch to Light"}
+            className="flex items-center justify-center gap-2 p-3.5 bg-white border border-border-subtle rounded-2xl text-text-tertiary hover:bg-slate-50 hover:text-brand transition-all group shadow-sm active:scale-95"
+            title="Help & Support"
           >
-            {theme === "light" ? <Moon size={18} className="group-hover:text-brand transition-colors" /> : <Sun size={18} className="group-hover:text-yellow-500 transition-colors" />}
+            <LifeBuoy size={20} className="group-hover:rotate-12 transition-transform" />
           </button>
           
           <button 
             onClick={logout}
-            className="flex items-center justify-center gap-2 p-3 bg-surface-50 dark:bg-zinc-900 border border-surface-200 dark:border-zinc-800 rounded-xl text-slate-400 dark:text-zinc-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-500 dark:hover:text-rose-400 transition-all group shadow-sm active:scale-95"
+            className="flex items-center justify-center gap-2 p-3.5 bg-white border border-border-subtle rounded-2xl text-text-tertiary hover:bg-rose-50 hover:text-rose-500 transition-all group shadow-sm active:scale-95"
+            title="Sign Out"
           >
-            <LogOut size={18} className="group-hover:scale-110 transition-transform" />
+            <LogOut size={20} className="group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
       </div>

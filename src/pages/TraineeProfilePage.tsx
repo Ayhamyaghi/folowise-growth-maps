@@ -15,118 +15,138 @@ import {
   ExternalLink,
   MessageSquare,
   MoreVertical,
-  ShieldAlert
+  ShieldAlert,
+  Clock
 } from "lucide-react";
 import { mockTrainees } from "../data/mockData";
+import { cn } from "../lib/utils";
 
 export default function TraineeProfilePage() {
   const { id } = useParams();
   const trainee = mockTrainees.find(t => t.id === id) || mockTrainees[0];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-20 transition-colors duration-500">
-      <Link to="/trainees" className="inline-flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-brand transition-colors group">
-        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
-        BACK TO ALL TRAINEES
+    <div className="max-w-6xl mx-auto space-y-10 pb-20 px-4 md:px-0">
+      <Link to="/trainees" className="inline-flex items-center gap-4 text-[10px] font-black tracking-[0.3em] text-text-tertiary hover:text-brand transition-all group px-2">
+        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+        RETURN TO REGISTRY
       </Link>
 
-      <div className="card-elevation rounded-[2.5rem] overflow-hidden shadow-sm">
-        <div className="h-48 bg-gradient-to-r from-brand/10 via-brand/5 to-transparent relative border-b border-surface-200 dark:border-transparent">
-           <div className="absolute inset-0 opacity-[0.03] dark:opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-           <button className="absolute top-6 right-8 p-2.5 bg-surface-100/40 hover:bg-surface-100/60 dark:bg-black/20 dark:hover:bg-black/40 backdrop-blur-md rounded-2xl transition-all border border-white/20 text-slate-600 dark:text-white shadow-sm">
-              <MoreVertical size={20} />
-           </button>
+      <div className="card-elevation rounded-[3rem] bg-white border border-border-subtle overflow-hidden shadow-2xl shadow-black/[0.03]">
+        <div className="h-64 bg-gradient-to-br from-slate-50 to-white relative border-b border-border-subtle">
+           <div className="absolute inset-0 opacity-[0.4] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
+           <div className="absolute top-10 right-10 flex gap-4">
+              <button className="p-4 bg-white/90 hover:bg-white backdrop-blur-md rounded-2xl transition-all border border-border-subtle text-text-tertiary shadow-sm hover:text-brand focus:ring-4 focus:ring-brand/[0.05]">
+                 <MoreVertical size={24} />
+              </button>
+           </div>
         </div>
 
-        <div className="px-10 pb-10">
-          <div className="relative flex flex-col md:flex-row items-end gap-6 -mt-12 mb-8">
-            <div className="w-32 h-32 rounded-[2.5rem] bg-surface-100 dark:bg-zinc-950 p-1.5 shadow-2xl relative border border-surface-200 dark:border-transparent transition-transform hover:scale-[1.02] duration-500">
-               <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover rounded-[2.1rem] border border-surface-200 dark:border-zinc-800 shadow-sm" />
-               <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-surface-100 dark:bg-zinc-950 border-4 border-surface-100 dark:border-zinc-950 rounded-full flex items-center justify-center">
-                 <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+        <div className="px-8 md:px-16 pb-16">
+          <div className="relative flex flex-col md:flex-row items-end gap-10 -mt-20 mb-16">
+            <div className="w-48 h-48 rounded-[3.5rem] bg-white p-2.5 shadow-2xl relative border border-border-subtle transition-all hover:scale-[1.02] duration-700">
+               <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover rounded-[3rem] border border-border-subtle shadow-inner" />
+               <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-white border-8 border-white rounded-[1.5rem] flex items-center justify-center shadow-xl">
+                 <div className="w-5 h-5 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.8)]"></div>
                </div>
             </div>
-            <div className="flex-1 pb-2">
-               <h1 className="text-4xl font-display font-black tracking-tight">{trainee.name}</h1>
-               <div className="flex flex-wrap items-center gap-y-2 gap-x-6 mt-2">
-                  <span className="flex items-center gap-2 text-brand font-bold text-sm">
-                     <Award size={16} /> {trainee.specialization}
+            <div className="flex-1 pb-6 text-center md:text-left">
+               <h1 className="text-5xl font-display font-black tracking-tight text-text-primary">{trainee.name}</h1>
+               <div className="flex flex-wrap items-center justify-center md:justify-start gap-y-4 gap-x-10 mt-5">
+                  <span className="flex items-center gap-3 text-brand font-black text-xs uppercase tracking-[0.2em] bg-brand/5 px-6 py-2.5 rounded-2xl border border-brand/10 shadow-sm shadow-brand/5 leading-none">
+                     <Award size={18} strokeWidth={2.5} /> {trainee.specialization} Unit
                   </span>
-                  <span className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-sm font-medium">
-                     <Mail size={16} /> {trainee.email}
+                  <span className="flex items-center gap-3 text-text-tertiary text-xs font-bold uppercase tracking-wider leading-none">
+                     <Mail size={18} className="opacity-40" /> {trainee.email}
                   </span>
-                  <span className="flex items-center gap-2 text-slate-500 dark:text-zinc-400 text-sm font-medium">
-                     <Calendar size={16} /> Joined April 2026
+                  <span className="flex items-center gap-3 text-text-tertiary text-xs font-bold uppercase tracking-wider leading-none">
+                     <Calendar size={18} className="opacity-40" /> <span className="opacity-80">Joined April 2026</span>
                   </span>
                </div>
             </div>
-            <div className="flex gap-3 pb-2">
-               <button className="px-6 py-3 bg-surface-100 dark:bg-zinc-800 border border-surface-200 dark:border-zinc-700 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-surface-50 dark:hover:bg-zinc-750 transition-all shadow-sm">
-                  <MessageSquare size={16} /> COMMUNICATE
+            <div className="flex gap-4 pb-6 w-full md:w-auto">
+               <button className="flex-1 md:flex-none px-10 py-5 bg-white border border-border-subtle rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm text-text-secondary">
+                  <MessageSquare size={20} className="opacity-40" /> Message
                </button>
-               <Link to={`/roadmap/${trainee.id}`} className="px-6 py-3 bg-brand text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:brightness-110 transition-all shadow-xl shadow-brand/20">
-                  <ExternalLink size={16} /> ROADMAP
+               <Link to={`/roadmap/${trainee.id}`} className="flex-1 md:flex-none px-10 py-5 bg-brand text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-brand/30">
+                  <ExternalLink size={20} /> View Roadmap
                </Link>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-             <div className="lg:col-span-2 space-y-8">
-                <div className="grid grid-cols-2 gap-6">
-                   <div className="bg-slate-50 dark:bg-zinc-800/50 p-8 rounded-[2rem] border border-slate-100 dark:border-zinc-800">
-                      <div className="flex justify-between items-start mb-4">
-                         <div className="w-10 h-10 bg-brand/10 text-brand rounded-xl flex items-center justify-center">
-                            <TrendingUp size={20} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+             <div className="lg:col-span-2 space-y-16">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+                   <div className="bg-slate-50/30 p-12 rounded-[3.5rem] border border-border-subtle shadow-sm group hover:border-brand/20 transition-all relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-brand/5 blur-3xl rounded-full -mr-16 -mt-16" />
+                      <div className="flex justify-between items-start mb-8 relative z-10">
+                         <div className="w-14 h-14 bg-brand/10 text-brand rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
+                            <TrendingUp size={28} strokeWidth={2.5} />
                          </div>
-                         <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">+4.2% wk</span>
+                         <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100 shadow-sm shadow-emerald-500/5">+4.2% wk</span>
                       </div>
-                      <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">Roadmap Progress</h4>
-                      <div className="flex items-end gap-3 translate-y-1">
-                         <span className="text-3xl font-display font-black">{trainee.progress}%</span>
-                         <span className="text-xs font-bold text-slate-400 mb-1">/ 100% Path</span>
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-text-tertiary mb-3 font-display relative z-10 opacity-70">Momentum</h4>
+                      <div className="flex items-baseline gap-4 relative z-10">
+                         <span className="text-5xl font-display font-black text-text-primary tracking-tighter">{trainee.progress}%</span>
+                         <span className="text-[11px] font-black text-text-tertiary uppercase tracking-widest leading-none opacity-60">Completion Rate</span>
                       </div>
                    </div>
 
-                   <div className="bg-slate-50 dark:bg-zinc-800/50 p-8 rounded-[2rem] border border-slate-100 dark:border-zinc-800">
-                      <div className="flex justify-between items-start mb-4">
-                         <div className="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center">
-                            <Calendar size={20} />
+                   <div className="bg-slate-50/30 p-12 rounded-[3.5rem] border border-border-subtle shadow-sm group hover:border-amber-200 transition-all relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 blur-3xl rounded-full -mr-16 -mt-16 opacity-40" />
+                      <div className="flex justify-between items-start mb-8 relative z-10">
+                         <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500 border border-amber-100">
+                            <Calendar size={28} className="text-amber-500" strokeWidth={2.5} />
                          </div>
                       </div>
-                      <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1">Est. Completion</h4>
-                      <div className="flex items-end gap-3 translate-y-1">
-                         <span className="text-2xl font-display font-black truncate">August 2026</span>
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-text-tertiary mb-3 font-display relative z-10 opacity-70">Target Outcome</h4>
+                      <div className="flex items-baseline gap-4 relative z-10">
+                         <span className="text-4xl font-display font-black text-text-primary tracking-tight">Aug 2026</span>
                       </div>
                    </div>
                 </div>
 
-                <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[2rem] p-8">
-                   <h4 className="text-lg font-bold mb-6 italic font-display">Active Focus Area</h4>
-                   <div className="flex items-center gap-6 bg-slate-50 dark:bg-zinc-800/30 p-6 rounded-2xl border border-dashed border-slate-200 dark:border-zinc-700">
-                      <div className="w-12 h-12 bg-white dark:bg-zinc-900 rounded-xl flex items-center justify-center shadow-sm text-brand border border-slate-100 dark:border-zinc-800">
-                         <Award size={24} />
+                <div className="bg-white border border-border-subtle rounded-[3.5rem] p-12 shadow-sm relative overflow-hidden group">
+                   <div className="absolute -right-12 -top-12 text-brand/5 opacity-40 group-hover:rotate-12 transition-transform duration-1000">
+                        <Award size={250} />
+                   </div>
+                   <h4 className="text-xl font-bold mb-10 text-text-primary flex items-center gap-4">
+                      Active Progression Node
+                   </h4>
+                   <div className="flex items-center gap-10 bg-slate-50/50 p-10 rounded-[2.5rem] border border-border-subtle relative z-10 group-hover:bg-brand/[0.02] transition-colors">
+                      <div className="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl text-brand border border-border-subtle group-hover:scale-110 transition-transform duration-500">
+                         <Award size={40} strokeWidth={2.5} />
                       </div>
-                      <div className="flex-1">
-                         <p className="text-sm font-bold">{trainee.activeTopic}</p>
-                         <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Part of Core Curriculum - Module 4</p>
+                      <div className="flex-1 min-w-0">
+                         <p className="text-2xl font-black text-text-primary leading-tight mb-3 uppercase tracking-tighter">{trainee.activeTopic}</p>
+                         <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-black text-brand uppercase tracking-[0.2em] bg-white px-4 py-1.5 rounded-xl border border-border-subtle shadow-sm">Module 4.2</span>
+                            <p className="text-[11px] text-text-tertiary font-black uppercase tracking-widest opacity-60">Architectural Core Curriculum</p>
+                         </div>
                       </div>
-                      <Link to={`/roadmap/${trainee.id}`} className="text-xs font-bold text-brand hover:underline">Track Node</Link>
+                      <Link to={`/roadmap/${trainee.id}`} className="p-4 bg-white rounded-2xl border border-border-subtle text-brand hover:bg-brand hover:text-white transition-all shadow-sm active:scale-95 group/link">
+                         <ExternalLink size={24} />
+                      </Link>
                    </div>
                 </div>
 
-                <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[2rem] p-8">
-                   <h4 className="text-lg font-bold mb-6 italic font-display">Recent Activity</h4>
-                   <div className="space-y-6">
+                <div className="bg-white border border-border-subtle rounded-[3.5rem] p-12 shadow-sm">
+                   <h4 className="text-xl font-bold mb-10 text-text-primary">Historical Footprint</h4>
+                   <div className="space-y-10 relative before:absolute before:inset-0 before:left-2 before:w-1 before:bg-slate-50 before:rounded-full">
                       {[
-                        { action: "Marked Node as Completed", target: "Spring Data JPA", date: "2 hours ago" },
-                        { action: "Started Deep learning", target: "Transformers 101", date: "Yesterday" },
-                        { action: "Structural Change Requested", target: "Add Cloud deployment", date: "2 days ago" }
+                        { action: "Marked Node as Completed", target: "Spring Data JPA", date: "2 hours ago", color: "bg-emerald-500" },
+                        { action: "Started Deep learning", target: "Transformers 101", date: "Yesterday", color: "bg-brand" },
+                        { action: "Structural Change Requested", target: "Add Cloud deployment", date: "2 days ago", color: "bg-amber-500" }
                       ].map((item, i) => (
-                        <div key={i} className="flex gap-4 items-start group">
-                           <div className="w-2 h-2 rounded-full bg-brand mt-1.5 shadow-[0_0_5px_rgba(99,102,241,1)]" />
-                           <div className="flex-1">
-                              <p className="text-sm font-medium">{item.action}: <span className="font-bold">"{item.target}"</span></p>
-                              <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase mt-1 tracking-widest">{item.date}</p>
+                        <div key={i} className="flex gap-8 items-start group relative z-10">
+                           <div className={cn("w-5 h-5 rounded-full mt-2 shadow-xl shrink-0 border-4 border-white", item.color)} />
+                           <div className="flex-1 bg-slate-50/30 p-8 rounded-[2rem] border border-border-subtle group-hover:border-slate-200 transition-all hover:bg-white hover:shadow-lg hover:shadow-black/[0.02]">
+                              <p className="text-base font-bold text-text-primary leading-relaxed uppercase tracking-tight">{item.action}</p>
+                              <p className="text-sm text-text-secondary mt-2 font-medium opacity-80 uppercase tracking-wide">Target: <span className="text-text-primary font-black italic">"{item.target}"</span></p>
+                              <div className="flex items-center gap-2 mt-6">
+                                  <Clock size={12} className="text-text-tertiary opacity-40" />
+                                  <p className="text-[11px] font-black text-text-tertiary uppercase tracking-[0.25em] opacity-50">{item.date}</p>
+                              </div>
                            </div>
                         </div>
                       ))}
@@ -134,28 +154,33 @@ export default function TraineeProfilePage() {
                 </div>
              </div>
 
-             <div className="space-y-8">
-                <div className="bg-red-50 dark:bg-red-500/5 border border-red-100 dark:border-red-500/20 p-8 rounded-[2rem]">
-                   <h4 className="flex items-center gap-2 text-red-500 font-bold mb-4">
-                      <ShieldAlert size={20} /> Attention Required
+             <div className="space-y-16">
+                <div className="bg-rose-50/50 border border-rose-100 p-12 rounded-[3.5rem] shadow-2xl shadow-rose-500/5 group">
+                   <h4 className="flex items-center gap-4 text-rose-500 font-black text-xs uppercase tracking-[0.3em] mb-8">
+                      <ShieldAlert size={24} className="group-hover:rotate-12 transition-transform" strokeWidth={2.5} /> Attention Required
                    </h4>
-                   <p className="text-sm font-medium text-red-600/80 leading-relaxed mb-6">
+                   <p className="text-base font-bold text-rose-700/80 leading-relaxed mb-10 uppercase tracking-tight">
                       The current roadmap path for this trainee has 2 pending structural requests awaiting your final approval.
                    </p>
-                   <Link to="/requests" className="w-full py-3 bg-red-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all">
+                   <Link to="/requests" className="w-full py-6 bg-rose-500 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-2xl shadow-rose-500/30 hover:brightness-110 active:scale-95 transition-all">
                       GO TO REQUESTS
                    </Link>
                 </div>
 
-                <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-8 rounded-[2rem]">
-                   <h4 className="text-xs font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-6">Internal Notes</h4>
-                   <div className="space-y-4">
-                      <div className="bg-slate-50 dark:bg-zinc-800 p-4 rounded-xl text-xs font-medium italic text-slate-600 dark:text-zinc-400">
+                <div className="card-elevation bg-white border border-border-subtle p-12 rounded-[3.5rem] shadow-sm">
+                   <h4 className="text-[11px] font-black text-text-tertiary uppercase tracking-[0.4em] mb-10 opacity-60">Internal Dossier</h4>
+                   <div className="space-y-8">
+                      <div className="bg-slate-50/50 p-8 rounded-[2rem] text-sm font-bold leading-relaxed italic text-text-secondary border border-border-subtle shadow-inner relative overflow-hidden">
+                        <div className="absolute -top-2 -right-2 text-brand/5 select-none pointer-events-none">
+                            <MessageSquare size={80} strokeWidth={2.5} />
+                        </div>
                          "Trainee shows high aptitude for backend logic but needs to improve focus on documentation protocols."
-                         <div className="mt-2 text-[10px] font-bold text-slate-400 not-italic uppercase tracking-wider">— Manager • May 04</div>
+                         <div className="mt-6 pt-6 border-t border-slate-200/50 text-[10px] font-black text-text-tertiary not-italic uppercase tracking-[0.3em] opacity-60">
+                            Authenticated Manager • May 04
+                         </div>
                       </div>
-                      <button className="w-full py-2.5 text-xs font-bold text-brand hover:bg-brand/5 rounded-xl border border-brand/20 transition-all">
-                         ADD PRIVATE NOTE
+                      <button className="w-full py-5 text-[11px] font-black text-brand hover:bg-brand/5 rounded-[1.5rem] border border-brand/20 transition-all uppercase tracking-[0.4em] shadow-sm shadow-brand/5">
+                         ADD PRIVATE ENTRY
                       </button>
                    </div>
                 </div>
