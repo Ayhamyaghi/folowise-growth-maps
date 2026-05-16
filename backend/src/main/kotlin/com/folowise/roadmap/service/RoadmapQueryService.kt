@@ -57,12 +57,13 @@ class RoadmapQueryService(
             val children: MutableList<MutableNode> = mutableListOf()
         )
 
+        // Pass 1: register every node in the map.
+        // Must complete before pass 2 so that all parents are present regardless
+        // of the order topics arrive in (global displayOrder sort is NOT topological).
         val nodeMap = LinkedHashMap<UUID, MutableNode>(topics.size)
-        val roots = mutableListOf<MutableNode>()
-
         for (topic in topics) {
             val id = requireNotNull(topic.id) { "Topic id must not be null" }
-            val node = MutableNode(
+            nodeMap[id] = MutableNode(
                 response = RoadmapTopicNodeResponse(
                     id = id,
                     parentId = topic.parent?.id,
@@ -74,17 +75,19 @@ class RoadmapQueryService(
                     children = emptyList() // replaced below after sorting
                 )
             )
-            nodeMap[id] = node
+        }
 
+        // Pass 2: wire parent → child relationships.
+        // Every parent is guaranteed to be in nodeMap at this point.
+        val roots = mutableListOf<MutableNode>()
+        for (topic in topics) {
+            val id = requireNotNull(topic.id) { "Topic id must not be null" }
+            val node = nodeMap[id]!!
             val parentId = topic.parent?.id
             if (parentId == null) {
                 roots.add(node)
             } else {
                 nodeMap[parentId]?.children?.add(node)
-                // If parent not yet in map (unusual ordering), node is silently orphaned.
-                // The DB ON DELETE CASCADE guarantees referential integrity, so this
-                // can only happen if topics are returned in non-topological order,
-                // which findAllByRoadmapIdOrderByDisplayOrderAsc avoids in practice.
             }
         }
 
