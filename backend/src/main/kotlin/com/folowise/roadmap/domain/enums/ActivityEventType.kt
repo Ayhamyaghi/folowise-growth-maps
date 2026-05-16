@@ -1,0 +1,17 @@
+package com.folowise.roadmap.domain.enums
+
+enum class ActivityEventType {
+    PROGRESS_UPDATE,
+    REQUEST_SUBMITTED,
+    REQUEST_APPROVED,
+    REQUEST_REJECTED,
+    TOPIC_ADDED,
+    TOPIC_EDITED,
+    TOPIC_DELETED,
+    TOPIC_MOVED,
+    ROADMAP_CREATED,
+    ROADMAP_COPIED,
+    RESOURCE_ADDED,
+    RESOURCE_DELETED,
+    SYSTEM
+}

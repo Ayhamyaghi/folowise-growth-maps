@@ -33,8 +33,9 @@ dependencies {
 
     // Database
     runtimeOnly("org.postgresql:postgresql")
+    // Spring Boot 3.2.x manages Flyway 9.x — PostgreSQL support is included in flyway-core.
+    // flyway-database-postgresql is a Flyway 10.x module and does not exist in Flyway 9.
     implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-database-postgresql")
 
     // API Documentation
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
