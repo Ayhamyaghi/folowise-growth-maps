@@ -66,21 +66,21 @@ function ManagerDashboard() {
   const topicsCompletedThisWeek = 24;
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="space-y-5 pb-6">
       <header className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-display font-black tracking-tight text-text-primary">Dashboard Overview</h1>
-          <p className="text-text-secondary mt-1 text-sm font-medium">Real-time oversight of trainee roadmap progression</p>
+          <h1 className="text-2xl font-display font-black tracking-tight text-text-primary">Dashboard Overview</h1>
+          <p className="text-text-secondary mt-1 text-xs font-medium opacity-80">Real-time oversight of trainee roadmap progression</p>
         </div>
         <div className="flex gap-3">
-          <Link to="/trainees" className="px-6 py-3 bg-brand text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-brand/20">
+          <Link to="/trainees" className="px-5 py-2.5 bg-brand text-white rounded-lg text-[9px] font-black uppercase tracking-[0.2em] hover:brightness-110 active:scale-95 transition-all shadow-lg">
             Add New Trainee
           </Link>
         </div>
       </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {[
           { label: "Total Trainees", value: totalTrainees, icon: Users, color: "text-status-info", bg: "bg-bg-info", border: "border-border-subtle" },
           { label: "Average Progress", value: `${avgProgress}%`, icon: TrendingUp, color: "text-brand", bg: "bg-bg-brand-soft", border: "border-border-subtle" },
@@ -89,113 +89,113 @@ function ManagerDashboard() {
         ].map((stat, i) => (
           <motion.div 
             key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
+            transition={{ delay: i * 0.05 }}
             className={cn(
-              "card-elevation p-5 rounded-[1.5rem] hover:shadow-2xl hover:shadow-brand/5 relative overflow-hidden group",
+              "card-elevation p-4 rounded-2xl hover:shadow-xl relative overflow-hidden group border",
               stat.border
             )}
           >
-            <div className={stat.bg + " absolute top-0 right-0 w-24 h-24 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-700 blur-3xl opacity-50"} />
+            <div className={stat.bg + " absolute top-0 right-0 w-20 h-20 rounded-full -mr-6 -mt-6 transition-transform group-hover:scale-110 duration-700 blur-2xl opacity-40"} />
             
             <div className="relative z-10">
-              <div className={stat.color + " mb-3 flex items-center justify-between"}>
-                <div className={cn("p-2 rounded-xl bg-white shadow-sm border", stat.border)}>
-                  <stat.icon size={18} className="opacity-90" />
+              <div className={stat.color + " mb-2.5 flex items-center justify-between"}>
+                <div className={cn("p-1.5 rounded-lg bg-white shadow-sm border", stat.border)}>
+                  <stat.icon size={16} className="opacity-90" />
                 </div>
-                <ArrowUpRight size={16} className="opacity-0 group-hover:opacity-40 transition-all transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-40 transition-all transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </div>
-              <h3 className="text-text-tertiary text-[9px] font-black uppercase tracking-[0.2em]">
+              <h3 className="text-text-tertiary text-[8px] font-black uppercase tracking-[0.15em]">
                 {stat.label}
               </h3>
-              <div className="flex items-baseline gap-2 mt-1">
-                <p className="text-2xl font-display font-black tracking-tighter text-text-primary">{stat.value}</p>
-                {stat.suffix && <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest opacity-60">{stat.suffix}</span>}
+              <div className="flex items-baseline gap-1.5 mt-0.5">
+                <p className="text-xl font-display font-black tracking-tighter text-text-primary">{stat.value}</p>
+                {stat.suffix && <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest opacity-60">{stat.suffix}</span>}
               </div>
             </div>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Trainees Requiring Attention */}
         <motion.div 
-          initial={{ opacity: 0, scale: 0.98 }}
+          initial={{ opacity: 0, scale: 0.99 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4 }}
-          className="lg:col-span-2 card-elevation p-6 rounded-[2rem] shadow-sm flex flex-col"
+          transition={{ delay: 0.2 }}
+          className="lg:col-span-2 card-elevation p-5 rounded-2xl shadow-sm flex flex-col"
         >
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-5">
             <div>
-              <h3 className="text-lg font-bold tracking-tight text-text-primary">Trainees needing attention</h3>
-              <p className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-1">Critical status alerts</p>
+              <h3 className="text-base font-bold tracking-tight text-text-primary">Trainees needing attention</h3>
+              <p className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.15em] mt-0.5 opacity-60">Critical status alerts</p>
             </div>
-            <button className="p-2 text-text-tertiary hover:text-brand transition-colors"><MoreHorizontal size={18}/></button>
+            <button className="p-1.5 text-text-tertiary hover:text-brand transition-colors"><MoreHorizontal size={16}/></button>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {mockTrainees.filter(t => t.attentionReason).slice(0, 5).map((trainee) => (
-              <div key={trainee.id} className="flex items-center gap-4 p-3.5 rounded-[1.25rem] bg-white border border-border-subtle transition-all hover:bg-slate-50/50 group hover:border-brand/20 shadow-sm shadow-black/[0.02]">
-                <div className="w-10 h-10 rounded-xl border-2 border-white overflow-hidden shadow-md group-hover:scale-105 transition-transform duration-500 shrink-0">
+              <div key={trainee.id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-border-subtle transition-all hover:bg-slate-50/50 group hover:border-brand/20 shadow-sm shadow-black/[0.01]">
+                <div className="w-9 h-9 rounded-lg border-2 border-white overflow-hidden shadow-sm shrink-0">
                    <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                    <h4 className="text-sm font-bold text-text-primary group-hover:text-brand transition-colors tracking-tight">{trainee.name}</h4>
-                   <div className="flex items-center gap-3 mt-1">
-                       <span className="flex items-center gap-1.5 text-[9px] font-black bg-bg-danger text-status-danger px-2 py-0.5 rounded-full uppercase tracking-wider border border-border-subtle shadow-sm">
-                           <Clock size={10} strokeWidth={3} /> {trainee.attentionReason}
+                   <div className="flex items-center gap-2 mt-0.5">
+                       <span className="flex items-center gap-1 text-[8px] font-black bg-bg-danger text-status-danger px-1.5 py-0.5 rounded-full uppercase tracking-wider border border-rose-100 shadow-sm">
+                           <Clock size={10} /> {trainee.attentionReason}
                        </span>
                    </div>
                 </div>
                 <div className="text-right shrink-0">
                    <p className="text-sm font-black text-text-primary tracking-tight font-display">{trainee.progress}%</p>
-                   <p className="text-[9px] font-black text-text-tertiary uppercase tracking-widest mt-0.5 opacity-60">{trainee.lastUpdate}</p>
+                   <p className="text-[8px] font-black text-text-tertiary uppercase tracking-widest mt-0.5 opacity-50">{trainee.lastUpdate}</p>
                 </div>
-                <Link to={`/roadmap/${trainee.id}`} className="p-2 text-text-tertiary hover:text-brand transition-all hover:translate-x-1 ml-1 bg-slate-50 rounded-xl border border-border-subtle">
-                   <ChevronRight size={16} />
+                <Link to={`/roadmap/${trainee.id}`} className="p-1.5 text-text-tertiary hover:text-brand transition-all hover:translate-x-0.5 ml-1 bg-slate-50 rounded-lg border border-border-subtle">
+                   <ChevronRight size={14} />
                 </Link>
               </div>
             ))}
           </div>
           
-          <Link to="/trainees" className="mt-8 text-center text-[9px] font-black uppercase tracking-[0.4em] text-text-tertiary hover:text-brand transition-all group flex items-center justify-center gap-3">
-             <span className="w-8 h-[1px] bg-border-subtle group-hover:bg-brand/20 transition-colors" />
+          <Link to="/trainees" className="mt-6 text-center text-[8px] font-black uppercase tracking-[0.3em] text-text-tertiary hover:text-brand transition-all group flex items-center justify-center gap-2">
+             <span className="w-6 h-[1px] bg-border-subtle group-hover:bg-brand/20 transition-colors" />
              View All Trainees 
-             <span className="w-8 h-[1px] bg-border-subtle group-hover:bg-brand/20 transition-colors" />
+             <span className="w-6 h-[1px] bg-border-subtle group-hover:bg-brand/20 transition-colors" />
           </Link>
         </motion.div>
 
         {/* Recent Activity */}
         <motion.div 
-           initial={{ opacity: 0, scale: 0.98 }}
+           initial={{ opacity: 0, scale: 0.99 }}
            animate={{ opacity: 1, scale: 1 }}
-           transition={{ delay: 0.5 }}
-           className="card-elevation p-6 rounded-[2rem] shadow-sm flex flex-col pt-8"
+           transition={{ delay: 0.3 }}
+           className="card-elevation p-5 rounded-2xl shadow-sm flex flex-col pt-6"
         >
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-5">
             <div>
-              <h3 className="text-lg font-bold tracking-tight text-text-primary">Recent Activity</h3>
-              <p className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-1">Global Workspace events</p>
+              <h3 className="text-base font-bold tracking-tight text-text-primary">Recent Activity</h3>
+              <p className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.15em] mt-0.5 opacity-60">Global events</p>
             </div>
-            <Link to="/activity" className="p-2 text-text-tertiary hover:text-brand transition-all bg-slate-50 rounded-xl shadow-sm"><MoreHorizontal size={18}/></Link>
+            <Link to="/activity" className="p-1.5 text-text-tertiary hover:text-brand transition-all bg-slate-50 rounded-lg shadow-sm"><MoreHorizontal size={16}/></Link>
           </div>
-          <div className="space-y-5 relative before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-50 before:rounded-full flex-1">
-            {mockActivity.slice(0, 6).map((activity) => (
-              <div key={activity.id} className="relative flex items-start gap-4 pl-8 group">
+          <div className="space-y-4 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-50 before:rounded-full flex-1">
+            {mockActivity.slice(0, 5).map((activity) => (
+              <div key={activity.id} className="relative flex items-start gap-3 pl-6 group">
                 <div className={cn(
-                   "absolute left-0 w-[18px] h-[18px] rounded-full border-[3px] border-white z-10 transition-transform group-hover:scale-110 shadow-xl",
-                  activity.type === "progress" ? "bg-emerald-500 shadow-emerald-500/20" : 
-                  activity.type === "approval" ? "bg-brand shadow-brand/20" :
-                  activity.type === "rejection" ? "bg-rose-500 shadow-rose-500/20" : "bg-slate-200"
+                   "absolute left-0 w-[14px] h-[14px] rounded-full border-[2.5px] border-white z-10 transition-transform group-hover:scale-110 shadow-md",
+                  activity.type === "progress" ? "bg-emerald-500 shadow-emerald-500/10" : 
+                  activity.type === "approval" ? "bg-brand shadow-brand/10" :
+                  activity.type === "rejection" ? "bg-rose-500 shadow-rose-500/10" : "bg-slate-200"
                 )}></div>
                 <div className="flex-1 min-w-0">
-                   <p className="text-xs leading-relaxed text-text-secondary tracking-tight">
+                   <p className="text-xs leading-snug text-text-secondary tracking-tight">
                       <span className="font-bold text-text-primary">{activity.user}</span>
                       {" "}{activity.action}{" "}
-                      <span className="font-bold text-text-primary bg-slate-50 px-1.5 py-0.5 rounded-lg border border-slate-100">"{activity.target}"</span>
+                      <span className="font-bold text-text-primary bg-slate-50 px-1 py-0.5 rounded-md border border-slate-100">"{activity.target.length > 20 ? activity.target.substring(0, 17) + '...' : activity.target}"</span>
                    </p>
-                   <span className="text-[10px] text-text-tertiary uppercase font-black tracking-widest block mt-1.5 opacity-60">{activity.time}</span>
+                   <span className="text-[9px] text-text-tertiary uppercase font-black tracking-widest block mt-1 opacity-50">{activity.time}</span>
                 </div>
               </div>
             ))}
@@ -204,40 +204,40 @@ function ManagerDashboard() {
       </div>
 
       <motion.div 
-         initial={{ opacity: 0, y: 20 }}
+         initial={{ opacity: 0, y: 15 }}
          animate={{ opacity: 1, y: 0 }}
-         transition={{ delay: 0.6 }}
-         className="card-elevation p-6 rounded-[2rem] shadow-sm border border-border-subtle"
+         transition={{ delay: 0.4 }}
+         className="card-elevation p-5 rounded-2xl shadow-sm border border-border-subtle"
       >
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-5">
           <div>
-            <h3 className="text-lg font-bold tracking-tight text-text-primary">Pending Requests Review</h3>
-            <p className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-1">Waiting for Manager review</p>
+            <h3 className="text-base font-bold tracking-tight text-text-primary">Pending Requests Review</h3>
+            <p className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.15em] mt-0.5 opacity-60">Manager review</p>
           </div>
-          <Link to="/requests" className="text-[10px] font-black uppercase tracking-[0.3em] text-brand hover:brightness-110 transition-all bg-brand/5 px-4 py-2 rounded-xl border border-brand/10 shadow-sm shadow-brand/5">View All Requests</Link>
+          <Link to="/requests" className="text-[8px] font-black uppercase tracking-[0.2em] text-brand hover:brightness-110 transition-all bg-brand/5 px-3 py-1.5 rounded-lg border border-brand/10 shadow-sm">View All</Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
            {mockChangeRequests.slice(0, 3).map(req => (
-             <div key={req.id} className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-border-subtle group hover:border-brand/30 transition-all hover:bg-slate-50/50 shadow-sm hover:shadow-lg hover:shadow-brand/[0.03]">
+             <div key={req.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-border-subtle group hover:border-brand/30 transition-all hover:bg-slate-50/50 shadow-sm">
                <div className="flex items-center gap-3">
                   <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center font-black text-[10px] border transition-transform group-hover:scale-110 shadow-sm",
-                    req.action === "Add" ? "bg-bg-success text-status-success border-border-subtle shadow-sm" :
-                    req.action === "Delete" ? "bg-bg-danger text-status-danger border-border-subtle shadow-sm" :
-                    req.action === "Move" ? "bg-bg-brand-soft text-brand border-border-subtle shadow-sm" :
-                    "bg-bg-pending text-status-pending border-border-subtle shadow-sm"
+                    "w-9 h-9 rounded-lg flex items-center justify-center font-black text-[9px] border transition-transform group-hover:scale-110",
+                    req.action === "Add" ? "bg-bg-success text-status-success border-emerald-100 shadow-sm" :
+                    req.action === "Delete" ? "bg-bg-danger text-status-danger border-rose-100 shadow-sm" :
+                    req.action === "Move" ? "bg-bg-brand-soft text-brand border-indigo-100 shadow-sm" :
+                    "bg-bg-pending text-status-pending border-amber-100 shadow-sm"
                   )}>
                      {req.action.toUpperCase().charAt(0)}
                   </div>
                   <div>
                      <p className="text-xs font-bold text-text-primary leading-none tracking-tight">{req.traineeName}</p>
-                     <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-text-tertiary opacity-60">{req.action}</span>
-                        <span className="text-[9px] font-bold text-text-secondary truncate max-w-[100px] italic">"{req.topicName}"</span>
+                     <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[8px] font-black uppercase tracking-widest text-text-tertiary opacity-60">{req.action}</span>
+                        <span className="text-[8px] font-bold text-text-secondary truncate max-w-[80px] italic">"{req.topicName}"</span>
                      </div>
                   </div>
                </div>
-               <ChevronRight size={16} className="text-text-tertiary opacity-40 group-hover:text-brand group-hover:opacity-100 transition-all" />
+               <ChevronRight size={14} className="text-text-tertiary opacity-40 group-hover:text-brand transition-all" />
              </div>
            ))}
         </div>
@@ -350,37 +350,37 @@ function TraineeDashboard() {
 
         {/* My Recent Activity */}
         <motion.div 
-           initial={{ opacity: 0, scale: 0.98 }}
+           initial={{ opacity: 0, scale: 0.99 }}
            animate={{ opacity: 1, scale: 1 }}
-           transition={{ delay: 0.5 }}
-           className="card-elevation p-6 rounded-[2rem] shadow-sm flex flex-col pt-8"
+           transition={{ delay: 0.3 }}
+           className="card-elevation p-5 rounded-2xl shadow-sm flex flex-col pt-6"
         >
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="text-lg font-bold tracking-tight text-text-primary">Recent Activity</h3>
-              <p className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-1">Personal log</p>
+              <h3 className="text-base font-bold tracking-tight text-text-primary">Recent Activity</h3>
+              <p className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.15em] mt-0.5 opacity-60">Personal log</p>
             </div>
           </div>
-          <div className="space-y-5 relative before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-50 before:rounded-full flex-1">
-            {myActivity.slice(0, 6).map((activity) => (
-              <div key={activity.id} className="relative flex items-start gap-4 pl-8 group">
+          <div className="space-y-4 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-50 before:rounded-full flex-1">
+            {myActivity.slice(0, 5).map((activity) => (
+              <div key={activity.id} className="relative flex items-start gap-3 pl-6 group">
                 <div className={cn(
-                  "absolute left-0 w-[18px] h-[18px] rounded-full border-[3px] border-white z-10 transition-transform group-hover:scale-110 shadow-xl",
-                  activity.type === "progress" ? "bg-emerald-500 shadow-emerald-500/20" : 
-                  activity.type === "approval" ? "bg-brand shadow-brand/20" :
-                  activity.type === "rejection" ? "bg-rose-500 shadow-rose-500/20" : "bg-slate-200"
+                  "absolute left-0 w-[14px] h-[14px] rounded-full border-[2.5px] border-white z-10 transition-transform group-hover:scale-110 shadow-md",
+                  activity.type === "progress" ? "bg-emerald-500 shadow-emerald-500/10" : 
+                  activity.type === "approval" ? "bg-brand shadow-brand/10" :
+                  activity.type === "rejection" ? "bg-rose-500 shadow-rose-500/10" : "bg-slate-200"
                 )}></div>
                 <div className="flex-1 min-w-0">
-                   <p className="text-sm leading-relaxed text-text-secondary tracking-tight">
+                   <p className="text-xs leading-snug text-text-secondary tracking-tight">
                       <span className="font-bold text-text-primary">{activity.user === myData.name ? "You" : activity.user}</span> {activity.action} {activity.target.toLowerCase().includes('as completed') ? (
                         <>
-                          <span className="font-bold text-text-primary bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">{activity.target.replace(/ as [Cc]ompleted/, '')}</span> as completed
+                          <span className="font-bold text-text-primary bg-slate-50 px-1 py-0.5 rounded-md border border-slate-100">{activity.target.replace(/ as [Cc]ompleted/, '')}</span> as completed
                         </>
                       ) : (
-                        <span className="font-bold text-text-primary bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">"{activity.target}"</span>
+                        <span className="font-bold text-text-primary bg-slate-50 px-1 py-0.5 rounded-md border border-slate-100">"{activity.target}"</span>
                       )}
                    </p>
-                   <span className="text-[11px] text-text-tertiary uppercase font-black tracking-widest block mt-2 opacity-60">{activity.time}</span>
+                   <span className="text-[9px] text-text-tertiary uppercase font-black tracking-widest block mt-1 opacity-50">{activity.time}</span>
                 </div>
               </div>
             ))}
@@ -388,79 +388,75 @@ function TraineeDashboard() {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <motion.div 
-           initial={{ opacity: 0, scale: 0.98 }}
+           initial={{ opacity: 0, scale: 0.99 }}
            animate={{ opacity: 1, scale: 1 }}
-           transition={{ delay: 0.6 }}
-           className="card-elevation p-6 rounded-[2rem] shadow-sm border border-border-subtle"
+           transition={{ delay: 0.4 }}
+           className="card-elevation p-5 rounded-2xl shadow-sm border border-border-subtle"
         >
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-5">
             <div>
-              <h3 className="text-lg font-bold tracking-tight text-text-primary">Current Focus</h3>
-              <p className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-1">Active progression node</p>
+              <h3 className="text-base font-bold tracking-tight text-text-primary">Current Focus</h3>
+              <p className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.15em] mt-0.5 opacity-60">Active node</p>
             </div>
-            <span className="text-[9px] font-black uppercase tracking-widest text-brand px-3 py-1 bg-brand/5 rounded-xl border border-brand/10 shadow-sm shadow-brand/5">{myData.specialization} Path</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-brand px-2 py-1 bg-brand/5 rounded-lg border border-brand/10 shadow-sm">{myData.specialization} Path</span>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
              {myData.activeTopic && (
-               <div className="p-5 rounded-[1.5rem] bg-bg-brand-soft border border-border-subtle shadow-sm group cursor-pointer hover:bg-bg-brand-soft/80 transition-all relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-brand opacity-[0.03] blur-3xl rounded-full -mr-12 -mt-12" />
-                  <p className="text-[9px] font-black text-brand uppercase tracking-[0.3em] mb-2 relative z-10">Active Milestone</p>
-                  <p className="text-xl font-display font-black text-text-primary leading-tight group-hover:text-brand transition-colors relative z-10">{myData.activeTopic}</p>
-                  <div className="mt-4 relative z-10">
-                     <div className="flex justify-between items-center mb-3">
-                        <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest opacity-60">Completion rate</span>
-                        <div className="flex items-center gap-1.5">
-                            <span className="w-1 h-1 rounded-full bg-brand animate-pulse" />
-                            <span className="text-xs font-black text-brand">45%</span>
-                        </div>
-                     </div>
-                     <div className="h-2 bg-white/50 rounded-full overflow-hidden p-0.5 border border-border-subtle">
-                        <div className="h-full bg-brand rounded-full shadow-lg shadow-brand/30" style={{ width: '45%' }}></div>
-                     </div>
-                  </div>
-               </div>
+                <div className="p-4 rounded-xl bg-bg-brand-soft border border-border-subtle shadow-sm group cursor-pointer hover:bg-bg-brand-soft/80 transition-all relative overflow-hidden">
+                   <p className="text-[8px] font-black text-brand uppercase tracking-[0.2em] mb-1.5 relative z-10">Active Milestone</p>
+                   <p className="text-base font-display font-black text-text-primary leading-tight group-hover:text-brand transition-colors relative z-10">{myData.activeTopic}</p>
+                   <div className="mt-3 relative z-10">
+                      <div className="flex justify-between items-center mb-2">
+                         <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest opacity-60">Progress</span>
+                         <span className="text-[10px] font-black text-brand">45%</span>
+                      </div>
+                      <div className="h-1.5 bg-white/50 rounded-full overflow-hidden border border-border-subtle">
+                         <div className="h-full bg-brand rounded-full shadow-lg" style={{ width: '45%' }}></div>
+                      </div>
+                   </div>
+                </div>
              )}
           </div>
         </motion.div>
 
         <motion.div 
-           initial={{ opacity: 0, scale: 0.98 }}
+           initial={{ opacity: 0, scale: 0.99 }}
            animate={{ opacity: 1, scale: 1 }}
-           transition={{ delay: 0.7 }}
-           className="card-elevation p-6 rounded-[2rem] shadow-sm border border-border-subtle flex flex-col"
+           transition={{ delay: 0.5 }}
+           className="card-elevation p-5 rounded-2xl shadow-sm border border-border-subtle flex flex-col"
         >
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold tracking-tight text-text-primary">My Requests</h3>
-            <Link to="/requests" className="text-[10px] font-black uppercase tracking-[0.3em] text-brand hover:brightness-110 transition-all bg-brand/5 px-4 py-2 rounded-xl border border-brand/10 shadow-sm shadow-brand/5">See all</Link>
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="text-base font-bold tracking-tight text-text-primary">My Requests</h3>
+            <Link to="/requests" className="text-[8px] font-black uppercase tracking-[0.2em] text-brand hover:brightness-110 transition-all bg-brand/5 px-3 py-1.5 rounded-lg border border-brand/10 shadow-sm">See all</Link>
           </div>
-          <div className="space-y-3 flex-1">
+          <div className="space-y-2.5 flex-1">
              {myRequests.slice(0, 3).map(req => (
-               <div key={req.id} className="flex items-center justify-between p-3.5 bg-white border border-border-subtle rounded-2xl hover:bg-slate-50/50 transition-all shadow-sm hover:translate-y-[-2px]">
-                 <div className="flex items-center gap-4">
+               <div key={req.id} className="flex items-center justify-between p-3 bg-white border border-border-subtle rounded-xl hover:bg-slate-50/50 transition-all shadow-sm">
+                 <div className="flex items-center gap-3">
                     <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-[10px] shadow-lg",
-                      req.action === "Add" ? "bg-status-success shadow-status-success/20" :
-                      req.action === "Delete" ? "bg-status-danger shadow-status-danger/20" : "bg-brand shadow-brand/20"
+                      "w-9 h-9 rounded-lg flex items-center justify-center text-white font-black text-[9px] shadow-md",
+                      req.action === "Add" ? "bg-status-success shadow-emerald-500/10" :
+                      req.action === "Delete" ? "bg-status-danger shadow-rose-500/10" : "bg-brand shadow-brand/10"
                     )}>
                        {req.action.charAt(0)}
                     </div>
                     <div>
-                       <p className="text-sm font-bold text-text-primary leading-none tracking-tight">{req.topicName}</p>
-                       <div className="flex items-center gap-2 mt-2">
+                       <p className="text-xs font-bold text-text-primary leading-none tracking-tight">{req.topicName}</p>
+                       <div className="flex items-center gap-1.5 mt-1.5">
                           <span className={cn(
-                            "text-[9px] font-black uppercase tracking-[0.15em] px-2.5 py-0.5 rounded-full border shadow-sm",
-                            req.status === "Pending" ? "bg-amber-50 text-amber-600 border-amber-100 shadow-amber-500/5" : 
-                            req.status === "Approved" ? "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-500/5" : 
-                            "bg-rose-50 text-rose-600 border-rose-100 shadow-rose-500/5"
+                            "text-[8px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded-full border",
+                            req.status === "Pending" ? "bg-amber-50 text-amber-600 border-amber-100" : 
+                            req.status === "Approved" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
+                            "bg-rose-50 text-rose-600 border-rose-100"
                           )}>
                              {req.status === "Pending" ? "Review" : req.status}
                           </span>
                        </div>
                     </div>
                  </div>
-                 <ChevronRight size={18} className="text-text-tertiary opacity-40" />
+                 <ChevronRight size={16} className="text-text-tertiary opacity-40" />
                </div>
              ))}
           </div>

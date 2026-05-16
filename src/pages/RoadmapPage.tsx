@@ -76,14 +76,21 @@ const RoadmapNode = ({
   topic, 
   onSelect, 
   isSelected,
-  isPhase = false 
+  isPhase = false,
+  isMatch = true,
+  hasMatchChild = false
 }: { 
   topic: RoadmapTopic; 
   onSelect: (topic: RoadmapTopic) => void;
   isSelected: boolean;
   isPhase?: boolean;
+  isMatch?: boolean;
+  hasMatchChild?: boolean;
 }) => {
   const isRoot = topic.id === "root";
+
+  // Hide if it's not a match AND doesn't have a child that is a match
+  if (!isMatch && !hasMatchChild) return null;
 
   return (
     <motion.div
@@ -93,29 +100,30 @@ const RoadmapNode = ({
       className={cn(
         "group cursor-pointer relative transition-all duration-500 select-none",
         isPhase 
-          ? "w-[280px] p-6 rounded-[2rem] border-2 shadow-card" 
-          : "w-[220px] p-5 rounded-[1.5rem] border shadow-sm",
+          ? "w-[240px] p-5 rounded-2xl border-2 shadow-card" 
+          : "w-[190px] p-4 rounded-xl border shadow-sm",
         isSelected 
           ? "bg-brand text-white border-brand ring-4 ring-brand/5 z-30 shadow-elevated" 
           : isRoot
           ? "bg-text-primary text-white border-text-primary shadow-elevated"
           : cn(
             "bg-white border-border-subtle hover:border-brand/40 hover:shadow-elevated",
-            isPhase && "bg-surface-card shadow-card border-border-standard"
+            isPhase && "bg-surface-card shadow-card border-border-standard",
+            !isMatch && "opacity-40 grayscale-[0.5]" // Highlight non-matches if they are parents
           )
       )}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div className={cn(
           "rounded-full shadow-sm",
-          isPhase ? "w-3 h-3" : "w-2 h-2",
+          isPhase ? "w-2.5 h-2.5" : "w-2 h-2",
           topic.status === TopicStatus.Completed ? "bg-status-success shadow-status-success/40 ring-4 ring-status-success/10" :
           topic.status === TopicStatus.InProgress ? "bg-brand shadow-brand/40 ring-4 ring-brand/10" :
           "bg-border-standard"
         )} />
         <span className={cn(
           "font-black uppercase tracking-[0.25em] whitespace-nowrap",
-          isPhase ? "text-[9px]" : "text-[7px]",
+          isPhase ? "text-[8px]" : "text-[7px]",
           (isSelected || isRoot) ? "opacity-60 text-white" : "opacity-40 text-text-tertiary"
         )}>
           {isRoot ? "Architecture" : isPhase ? "Phase" : "Module"}
@@ -124,13 +132,13 @@ const RoadmapNode = ({
 
       <h4 className={cn(
         "font-display font-black leading-tight tracking-tight",
-        isPhase ? "text-xl mb-2" : "text-[15px] mb-1.5",
+        isPhase ? "text-lg mb-1.5" : "text-[14px] mb-1",
         (isSelected || isRoot) ? "text-white" : "text-text-primary"
       )}>
         {topic.title}
       </h4>
       
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex items-center justify-between mt-3">
         <div className={cn(
           "text-[8px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-lg shadow-sm border transition-all",
           (isSelected || isRoot) 
@@ -145,8 +153,8 @@ const RoadmapNode = ({
           {topic.status}
         </div>
         {!(isSelected || isRoot) && (
-          <div className="p-1.5 bg-surface-soft rounded-lg opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
-             <ChevronRight size={12} className="text-brand" strokeWidth={3} />
+          <div className="p-1 px-1.5 bg-surface-soft rounded-lg opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1">
+             <ChevronRight size={10} className="text-brand" strokeWidth={3} />
           </div>
         )}
       </div>
@@ -154,15 +162,22 @@ const RoadmapNode = ({
   );
 };
 
-const TreeBranch = ({ topic, onSelect, selectedId, depth = 0 }: { 
+const TreeBranch = ({ topic, onSelect, selectedId, depth = 0, matchesSearch, hasMatchingChild }: { 
   topic: RoadmapTopic; 
   onSelect: (t: RoadmapTopic) => void; 
   selectedId?: string;
   depth?: number;
+  matchesSearch: (t: RoadmapTopic) => boolean;
+  hasMatchingChild: (t: RoadmapTopic) => boolean;
 }) => {
   const isSelected = selectedId === topic.id;
   const hasChildren = topic.children && topic.children.length > 0;
   const isRoot = topic.id === "root";
+
+  const isMatch = matchesSearch(topic);
+  const hasMatchChild = hasMatchingChild(topic);
+
+  if (!isMatch && !hasMatchChild) return null;
 
   return (
     <div className="flex flex-col items-center relative">
@@ -171,34 +186,38 @@ const TreeBranch = ({ topic, onSelect, selectedId, depth = 0 }: {
         onSelect={onSelect} 
         isSelected={isSelected}
         isPhase={isRoot || depth === 1}
+        isMatch={isMatch}
+        hasMatchChild={hasMatchChild}
       />
       
       {hasChildren && (
-        <div className="flex gap-16 pt-32 relative">
+        <div className="flex gap-12 pt-20 relative">
           {/* Vertical line down from current node */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[3px] h-32 bg-border-standard" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-20 bg-border-standard" />
           
-          {topic.children!.map((child, index) => {
+          {topic.children!.filter(c => matchesSearch(c) || hasMatchingChild(c)).map((child, index, filtered) => {
             const isFirst = index === 0;
-            const isLast = index === (topic.children?.length || 0) - 1;
-            const isOnly = topic.children?.length === 1;
+            const isLast = index === filtered.length - 1;
+            const isOnly = filtered.length === 1;
             
             return (
-              <div key={child.id} className="relative pt-16">
+              <div key={child.id} className="relative pt-12">
                 {/* Horizontal connector shoulder */}
                 {!isOnly && (
                   <div className={cn(
-                    "absolute top-0 h-[3px] bg-border-standard",
+                    "absolute top-0 h-[2px] bg-border-standard",
                     isFirst ? "left-1/2 right-0" : isLast ? "left-0 right-1/2" : "left-0 right-0"
                   )} />
                 )}
                 {/* Visual stub to connect to the node above */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[3px] h-16 bg-border-standard" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-12 bg-border-standard" />
                 <TreeBranch 
                   topic={child} 
                   onSelect={onSelect} 
                   selectedId={selectedId} 
                   depth={depth + 1}
+                  matchesSearch={matchesSearch}
+                  hasMatchingChild={hasMatchingChild}
                 />
               </div>
             );
@@ -211,34 +230,34 @@ const TreeBranch = ({ topic, onSelect, selectedId, depth = 0 }: {
 
 const ZoomControls = ({ zoom, onZoomIn, onZoomOut, onReset }: { zoom: number, onZoomIn: () => void, onZoomOut: () => void, onReset: () => void }) => {
   return (
-    <div className="fixed bottom-10 right-10 flex flex-col gap-3 z-[60]">
-       <div className="bg-white border-2 border-border-standard rounded-3xl p-2 shadow-elevated flex flex-col gap-1 backdrop-blur-xl">
+    <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[60]">
+       <div className="bg-white border border-border-standard rounded-2xl p-1 shadow-lg flex flex-col gap-0.5 backdrop-blur-xl">
           <button 
             onClick={onZoomIn}
-            className="p-3.5 hover:bg-surface-soft rounded-2xl text-text-secondary hover:text-brand transition-all active:scale-90"
+            className="p-2 hover:bg-surface-soft rounded-xl text-text-secondary hover:text-brand transition-all active:scale-95"
             title="Zoom In"
           >
-            <Plus size={22} strokeWidth={2.5} />
+            <Plus size={16} strokeWidth={3} />
           </button>
-          <div className="h-px bg-border-subtle mx-2" />
+          <div className="h-px bg-border-subtle mx-1.5" />
           <button 
             onClick={onZoomOut}
-            className="p-3.5 hover:bg-surface-soft rounded-2xl text-text-secondary hover:text-brand transition-all active:scale-90"
+            className="p-2 hover:bg-surface-soft rounded-xl text-text-secondary hover:text-brand transition-all active:scale-95"
             title="Zoom Out"
           >
-            <Minus size={22} strokeWidth={2.5} />
+            <Minus size={16} strokeWidth={3} />
           </button>
-          <div className="h-px bg-border-subtle mx-2" />
+          <div className="h-px bg-border-subtle mx-1.5" />
           <button 
             onClick={onReset}
-            className="p-3.5 hover:bg-surface-soft rounded-2xl text-text-secondary hover:text-brand transition-all active:scale-90"
+            className="p-2 hover:bg-surface-soft rounded-xl text-text-secondary hover:text-brand transition-all active:scale-95"
             title="Reset View"
           >
-            <Maximize size={22} strokeWidth={2.5} />
+            <Maximize size={16} strokeWidth={3} />
           </button>
        </div>
-       <div className="bg-text-primary text-white rounded-2xl py-2 px-4 shadow-elevated text-center ring-4 ring-text-primary/10">
-          <span className="text-[10px] font-black uppercase tracking-[0.2em]">{Math.round(zoom * 100)}%</span>
+       <div className="bg-white border border-border-standard text-text-secondary rounded-xl py-1 px-3 shadow-md text-center">
+          <span className="text-[9px] font-black uppercase tracking-[0.1em]">{Math.round(zoom * 100)}%</span>
        </div>
     </div>
   );
@@ -251,6 +270,7 @@ const ResourceIcon = ({ type }: { type: ResourceType }) => {
     case ResourceType.Documentation: return <BookOpen size={14} />;
     case ResourceType.GitHub: return <Github size={14} />;
     case ResourceType.Course: return <Zap size={14} />;
+    case ResourceType.Notes: return <FileText size={14} />;
     default: return <LinkIcon size={14} />;
   }
 };
@@ -284,14 +304,23 @@ const ListViewRow = ({
   topic, 
   depth = 0, 
   onSelect, 
-  selectedId 
+  selectedId,
+  matchesSearch,
+  hasMatchingChild
 }: { 
   topic: RoadmapTopic; 
   depth?: number; 
   onSelect: (topic: RoadmapTopic) => void;
   selectedId?: string;
   key?: string;
+  matchesSearch: (t: RoadmapTopic) => boolean;
+  hasMatchingChild: (t: RoadmapTopic) => boolean;
 }) => {
+  const query = matchesSearch(topic);
+  const matchChild = hasMatchingChild(topic);
+
+  if (!query && !matchChild) return null;
+
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = topic.children && topic.children.length > 0;
   const isSelected = selectedId === topic.id;
@@ -302,62 +331,65 @@ const ListViewRow = ({
         layout
         onClick={() => onSelect(topic)}
         className={cn(
-          "group flex items-center gap-6 py-5 px-6 rounded-[2rem] transition-all cursor-pointer border-2",
-          isSelected ? "bg-brand/5 border-brand/20 shadow-sm" : "border-transparent hover:bg-surface-soft hover:border-border-subtle"
+          "group flex items-center gap-4 py-3 px-4 rounded-xl transition-all cursor-pointer border-2",
+          isSelected ? "bg-brand/5 border-brand/20 shadow-sm" : "border-transparent hover:bg-surface-soft hover:border-border-subtle",
+          !query && "opacity-50"
         )}
-        style={{ marginLeft: `${depth * 32}px` }}
+        style={{ marginLeft: `${depth * 24}px` }}
       >
-        <div className="flex items-center gap-5 min-w-[280px]">
+        <div className="flex items-center gap-3 min-w-[200px]">
           {hasChildren ? (
             <button 
               onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
-              className="p-1.5 hover:bg-white rounded-lg transition-all text-brand shadow-sm border border-transparent hover:border-border-subtle"
+              className="p-1 hover:bg-white rounded-lg transition-all text-brand shadow-sm border border-transparent hover:border-border-subtle"
             >
-              <ChevronDown size={18} strokeWidth={3} className={cn("transition-transform duration-500", !isExpanded && "-rotate-90")} />
+              <ChevronDown size={14} strokeWidth={3} className={cn("transition-transform duration-500", !isExpanded && "-rotate-90")} />
             </button>
           ) : (
-            <div className="w-8" />
+            <div className="w-6" />
           )}
           <div className={cn(
-            "w-3 h-3 rounded-full ring-4 ring-opacity-20 transition-all",
+            "w-2.5 h-2.5 rounded-full ring-4 ring-opacity-10 transition-all",
             topic.status === TopicStatus.Completed ? "bg-status-success ring-status-success" : 
             topic.status === TopicStatus.InProgress ? "bg-brand ring-brand" : "bg-border-standard ring-transparent"
           )} />
           <h4 className={cn(
-            "text-[15px] font-black tracking-tight transition-all",
+            "text-[14px] font-black tracking-tight transition-all",
             topic.status === TopicStatus.Completed ? "text-text-tertiary line-through decoration-text-tertiary/40" : "text-text-primary",
-            depth === 0 && "text-lg uppercase"
+            depth === 0 && "text-base uppercase"
           )}>
             {topic.title}
           </h4>
         </div>
 
-        <div className="flex-1 h-[2px] bg-border-subtle opacity-10 mx-6" />
+        <div className="flex-1 h-[1px] bg-border-subtle opacity-10 mx-4" />
 
-        <div className="flex items-center gap-10">
-          <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-            <Clock size={14} className="text-text-tertiary" />
-            <span className="text-[11px] font-black text-text-tertiary uppercase tracking-widest">{topic.estimatedHours || 0}H</span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+            <Clock size={12} className="text-text-tertiary" />
+            <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">{topic.estimatedHours || 0}H</span>
           </div>
           <StatusBadge status={topic.status} />
           <div className={cn(
-            "p-2 rounded-xl transition-all opacity-0 group-hover:opacity-100",
+            "p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100",
             isSelected ? "bg-brand text-white opacity-100 shadow-lg shadow-brand/30" : "bg-surface-soft text-text-tertiary"
           )}>
-            <ChevronRight size={16} strokeWidth={3} className={cn("transition-transform", isSelected && "translate-x-0.5")} />
+            <ChevronRight size={14} strokeWidth={3} className={cn("transition-transform", isSelected && "translate-x-0.5")} />
           </div>
         </div>
       </motion.div>
 
       {hasChildren && isExpanded && (
         <div className="flex flex-col mt-2">
-          {topic.children?.map(child => (
+          {topic.children?.filter(c => matchesSearch(c) || hasMatchingChild(c)).map(child => (
             <ListViewRow 
               key={child.id} 
               topic={child} 
               depth={depth + 1} 
               onSelect={onSelect}
               selectedId={selectedId}
+              matchesSearch={matchesSearch}
+              hasMatchingChild={hasMatchingChild}
             />
           ))}
         </div>
@@ -374,7 +406,10 @@ const DetailPanel = ({
   onMove,
   onCopy,
   onAddResource,
-  role 
+  role,
+  traineeName,
+  onStatusChange,
+  onDeleteResource
 }: { 
   topic: RoadmapTopic; 
   onClose: () => void;
@@ -385,6 +420,9 @@ const DetailPanel = ({
   onCopy: (topic: RoadmapTopic) => void;
   onAddResource: (topic: RoadmapTopic) => void;
   role: string;
+  traineeName: string;
+  onStatusChange: (topic: RoadmapTopic, status: TopicStatus) => void;
+  onDeleteResource: (topicId: string, resourceId: string) => void;
 }) => {
   const isManager = role === "manager";
 
@@ -486,17 +524,36 @@ const DetailPanel = ({
                   className="group flex flex-col p-4 bg-white rounded-2xl border border-border-standard hover:border-brand/40 transition-all shadow-sm"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3 text-brand">
-                      <div className="p-2 bg-brand/5 rounded-lg group-hover:bg-brand group-hover:text-white transition-all">
-                        <ResourceIcon type={res.type} />
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-3 text-brand">
+                        <div className="p-2 bg-brand/5 rounded-lg group-hover:bg-brand group-hover:text-white transition-all">
+                          <ResourceIcon type={res.type} />
+                        </div>
+                        <span className="text-xs font-black uppercase tracking-tight">{res.title}</span>
                       </div>
-                      <span className="text-xs font-black uppercase tracking-tight">{res.title}</span>
+                      {res.note && (
+                        <p className="text-[10px] font-medium text-text-tertiary leading-relaxed mt-1 text-left italic opacity-80 pl-1">{res.note}</p>
+                      )}
                     </div>
                     <ExternalLink size={12} className="text-text-tertiary opacity-0 group-hover:opacity-100 transition-all" />
                   </div>
                   <div className="flex items-center justify-between pt-3 border-t border-border-subtle/40">
-                    <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest">By {res.addedBy}</span>
-                    <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest">{res.addedDate}</span>
+                    <div className="flex items-center gap-4">
+                      <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest">By {res.addedBy}</span>
+                      <span className="text-[8px] font-black text-text-tertiary uppercase tracking-widest">{res.addedDate}</span>
+                    </div>
+                    {isManager || res.addedBy === traineeName ? (
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDeleteResource(topic.id, res.id);
+                        }}
+                        className="p-1 hover:bg-rose-50 text-text-tertiary hover:text-rose-500 rounded transition-colors"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    ) : null}
                   </div>
                 </a>
               ))
@@ -555,8 +612,16 @@ const DetailPanel = ({
       {/* Floating Action Bar */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-border-standard flex flex-col gap-4 z-20">
          <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 py-4 bg-brand text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-brand/30 hover:brightness-110 active:scale-95 transition-all">
-              <CheckCircle2 size={18} strokeWidth={3} /> {isManager ? "SYNC" : "COMPLETE"}
+            <button 
+              onClick={() => onStatusChange(topic, topic.status === TopicStatus.Completed ? TopicStatus.InProgress : TopicStatus.Completed)}
+              className={cn(
+                "flex items-center justify-center gap-2 py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95",
+                topic.status === TopicStatus.Completed 
+                  ? "bg-surface-soft text-text-secondary shadow-none border border-border-subtle" 
+                  : "bg-brand text-white shadow-brand/30 hover:brightness-110"
+              )}
+            >
+              <CheckCircle2 size={18} strokeWidth={3} /> {topic.status === TopicStatus.Completed ? "RE-ACTIVATE" : (isManager ? "SYNC STATUS" : "MARK COMPLETE")}
             </button>
             <button className="flex items-center justify-center gap-2 py-4 bg-surface-soft text-text-secondary rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white border border-transparent hover:border-border-subtle transition-all active:scale-95 shadow-sm">
               <MessageSquare size={18} strokeWidth={2.5} /> FEEDBACK
@@ -580,21 +645,30 @@ export default function RoadmapPage() {
   const activeTraineeId = isTrainee ? "t1" : (id === "me" || !id ? "t1" : id);
   const trainee = mockTrainees.find(t => t.id === activeTraineeId) || mockTrainees[0];
 
+  const [roadmapData, setRoadmapData] = useState<RoadmapTopic[]>(mockRoadmap);
   const [viewMode, setViewMode] = useState<ViewMode>("tree");
   const [selectedTopic, setSelectedTopic] = useState<RoadmapTopic | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [activeModal, setActiveModal] = useState<"add" | "edit" | "delete" | "move" | "copy" | "resource" | null>(null);
   const [modalContext, setModalContext] = useState<RoadmapTopic | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Visual Layout: Recursive Tree rendering
+  // Helper to show toast
+  const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Visual Layout: Virtual Root for easy traversal
   const virtualRoot: RoadmapTopic = {
     id: "root",
     title: "AI Engineering Roadmap",
     status: TopicStatus.Completed,
     isCountable: false,
     description: "The global strategic path for AI Engineering excellence.",
-    children: mockRoadmap
+    children: roadmapData
   };
 
   const flattenTopics = (topics: RoadmapTopic[]): RoadmapTopic[] => {
@@ -608,7 +682,140 @@ export default function RoadmapPage() {
     return result;
   };
 
-  const allTopics = [virtualRoot, ...flattenTopics(mockRoadmap)];
+  const allTopics = [virtualRoot, ...flattenTopics(roadmapData)];
+
+  // Recursive roadmap update function
+  const mutateRoadmap = (
+    data: RoadmapTopic[], 
+    action: 'add' | 'edit' | 'delete' | 'move' | 'status' | 'resource-add' | 'resource-delete',
+    payload: any
+  ): RoadmapTopic[] => {
+    // Deep clone to avoid direct mutation
+    const newData = JSON.parse(JSON.stringify(data));
+
+    const process = (items: RoadmapTopic[]): boolean => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+
+        if (action === 'add' && item.id === payload.parentId) {
+          if (!item.children) item.children = [];
+          item.children.push(payload.newNode);
+          return true;
+        }
+
+        if (item.id === payload.id) {
+          if (action === 'edit') {
+            Object.assign(item, payload.updates);
+            return true;
+          }
+          if (action === 'delete') {
+            items.splice(i, 1);
+            return true;
+          }
+          if (action === 'move') {
+            // This is complex, handled separately usually, but we can do it here
+            // Removing from current parent is done in 'delete' logic basically
+            return true;
+          }
+          if (action === 'status') {
+            item.status = payload.status;
+            return true;
+          }
+          if (action === 'resource-add') {
+            if (!item.resources) item.resources = [];
+            item.resources.push(payload.resource);
+            return true;
+          }
+          if (action === 'resource-delete') {
+             item.resources = item.resources?.filter(r => r.id !== payload.resourceId);
+             return true;
+          }
+        }
+
+        if (item.children && process(item.children)) return true;
+      }
+      return false;
+    };
+
+    if (action === 'add' && payload.parentId === 'root') {
+      newData.push(payload.newNode);
+    } else if (action === 'move') {
+       // Move logic: 
+       // 1. Find and remove the node from old location
+       let movedNode: RoadmapTopic | null = null;
+       const remove = (items: RoadmapTopic[]): boolean => {
+          for(let i=0; i<items.length; i++) {
+             if(items[i].id === payload.id) {
+                movedNode = items.splice(i, 1)[0];
+                return true;
+             }
+             if(items[i].children && remove(items[i].children!)) return true;
+          }
+          return false;
+       }
+       remove(newData);
+       if (movedNode) {
+          if (payload.newParentId === 'root') {
+             newData.push({ ...movedNode, parentId: undefined });
+          } else {
+             const insert = (items: RoadmapTopic[]): boolean => {
+                for(let i=0; i<items.length; i++) {
+                   if(items[i].id === payload.newParentId) {
+                      if(!items[i].children) items[i].children = [];
+                      items[i].children!.push({ ...movedNode!, parentId: payload.newParentId });
+                      return true;
+                   }
+                   if(items[i].children && insert(items[i].children!)) return true;
+                }
+                return false;
+             }
+             insert(newData);
+          }
+       }
+    } else {
+      process(newData);
+    }
+    
+    return newData;
+  };
+
+  const handleAction = (action: 'add' | 'edit' | 'delete' | 'move' | 'status' | 'resource-add' | 'resource-delete', payload: any) => {
+    // If trainee and structural change, create request
+    const isStructural = ['add', 'edit', 'delete', 'move'].includes(action);
+    if (isTrainee && isStructural) {
+      showToast("Proposal submitted for manager approval", "info");
+      setActiveModal(null);
+      return;
+    }
+
+    const updatedData = mutateRoadmap(roadmapData, action, payload);
+    setRoadmapData(updatedData);
+
+    // Update selected topic if it was the one modified
+    if (selectedTopic && (payload.id === selectedTopic.id || action === 'add')) {
+        // Find the updated version of selectedTopic
+        const flat = flattenTopics(updatedData);
+        const updatedSelected = flat.find(t => t.id === selectedTopic.id);
+        if (updatedSelected) setSelectedTopic(updatedSelected);
+        else if (action === 'delete') setSelectedTopic(null);
+    }
+
+    showToast(`Roadmap synchronized successfully`);
+    setActiveModal(null);
+  };
+
+  // Search logic
+  const matchesSearch = (topic: RoadmapTopic) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return topic.title.toLowerCase().includes(query) || 
+           topic.description?.toLowerCase().includes(query);
+  };
+
+  // Find if any child matches search
+  const hasMatchingChild = (topic: RoadmapTopic): boolean => {
+    return topic.children?.some(child => matchesSearch(child) || hasMatchingChild(child)) || false;
+  };
 
   const getBreadcrumbs = (topicId: string): string => {
     const topic = allTopics.find(t => t.id === topicId);
@@ -636,6 +843,13 @@ export default function RoadmapPage() {
     const descendants = flattenTopics([allTopics.find(t => t.id === excludeId)!]).map(d => d.id);
     return allTopics.filter(t => t.id !== excludeId && !descendants.includes(t.id));
   };
+
+  // Calculate dynamic progress
+  const countableTopics = allTopics.filter(t => t.isCountable);
+  const completedCountable = countableTopics.filter(t => t.status === TopicStatus.Completed).length;
+  const progressPercentage = countableTopics.length > 0 
+    ? Math.round((completedCountable / countableTopics.length) * 100) 
+    : 0;
 
   useEffect(() => {
     if (containerRef.current) {
@@ -665,80 +879,82 @@ export default function RoadmapPage() {
   return (
     <div className="h-screen flex flex-col bg-background-app overflow-hidden transition-colors duration-500">
       {/* Top Header */}
-      <header className="shrink-0 bg-white border-b border-border-subtle px-8 py-4 flex items-center justify-between relative z-50 shadow-sm transition-all">
-        <div className="flex items-center gap-6">
+      <header className="shrink-0 bg-white border-b border-border-subtle px-6 py-3 flex items-center justify-between relative z-50 shadow-sm transition-all">
+        <div className="flex items-center gap-4">
           {!isTrainee && (
             <>
-              <Link to="/trainees" className="p-2.5 hover:bg-surface-soft rounded-xl border border-transparent hover:border-border-subtle transition-all text-text-tertiary shadow-sm active:scale-90">
-                <ArrowLeft size={20} strokeWidth={3} />
+              <Link to="/trainees" className="p-2 hover:bg-surface-soft rounded-lg border border-transparent hover:border-border-subtle transition-all text-text-tertiary shadow-sm active:scale-90">
+                <ArrowLeft size={18} strokeWidth={3} />
               </Link>
-              <div className="h-8 w-[1px] bg-border-standard opacity-50" />
+              <div className="h-6 w-[1px] bg-border-standard opacity-50" />
             </>
           )}
-          <div className="flex items-center gap-4">
-             <div className="w-12 h-12 rounded-xl p-0.5 bg-white border border-border-standard shadow-lg ring-4 ring-brand/5">
-                <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover rounded-[0.55rem]" />
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-lg p-0.5 bg-white border border-border-standard shadow-md ring-4 ring-brand/5">
+                <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover rounded-[0.45rem]" />
              </div>
-              <div className="space-y-0.5">
-                <h1 className="text-lg font-display font-black text-text-primary leading-tight uppercase tracking-tight">
+              <div className="space-y-0">
+                <h1 className="text-base font-display font-black text-text-primary leading-tight uppercase tracking-tight">
                    {isTrainee ? "Strategic Roadmap" : trainee.name}
                 </h1>
                 <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse shadow-sm shadow-brand" />
-                  <p className="text-[9px] font-black text-brand tracking-[0.3em] uppercase opacity-70">{trainee.specialization}</p>
+                  <span className="w-1 h-1 rounded-full bg-brand animate-pulse shadow-sm shadow-brand" />
+                  <p className="text-[8px] font-black text-brand tracking-[0.2em] uppercase opacity-70">{trainee.specialization}</p>
                 </div>
              </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-10">
-           <div className="flex items-center gap-6">
-              <div className="flex flex-col items-end gap-1">
-                 <span className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.3em] opacity-60">Mastery</span>
-                 <div className="flex items-baseline gap-1">
-                   <span className="text-2xl font-display font-black text-text-primary leading-none tracking-tighter">{trainee.progress}</span>
-                   <span className="text-[10px] font-black text-text-tertiary uppercase tracking-widest">%</span>
+        <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-end gap-0.5">
+                 <span className="text-[7px] font-black text-text-tertiary uppercase tracking-[0.2em] opacity-60">Mastery</span>
+                 <div className="flex items-baseline gap-0.5">
+                   <span className="text-xl font-display font-black text-text-primary leading-none tracking-tighter">{progressPercentage}</span>
+                   <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest">%</span>
                  </div>
               </div>
-              <div className="w-32 h-2.5 bg-surface-soft rounded-full overflow-hidden border border-border-standard shadow-inner">
+              <div className="w-24 h-2 bg-surface-soft rounded-full overflow-hidden border border-border-standard shadow-inner">
                  <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: `${trainee.progress}%` }}
+                    animate={{ width: `${progressPercentage}%` }}
                     className="h-full bg-brand rounded-full shadow-md shadow-brand/40"
                  />
               </div>
            </div>
-           <button className="px-6 py-3 bg-brand text-white rounded-xl text-[10px] font-black tracking-[0.25em] uppercase hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-brand/20">
+           <button className="px-4 py-2.5 bg-brand text-white rounded-xl text-[9px] font-black tracking-[0.2em] uppercase hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-brand/20">
               {isTrainee ? "EXPORT" : "AUDIT"}
            </button>
         </div>
       </header>
 
       {/* Roadmap Toolbar (Global Actions) */}
-      <div className="shrink-0 bg-surface-soft/40 backdrop-blur-xl border-b border-border-subtle px-8 py-3 flex items-center justify-between z-40 relative shadow-sm">
-        <div className="flex items-center gap-6">
+      <div className="shrink-0 bg-surface-soft/40 backdrop-blur-xl border-b border-border-subtle px-6 py-2 flex items-center justify-between z-40 relative shadow-sm">
+        <div className="flex items-center gap-4">
           <ViewSwitcher mode={viewMode} onChange={setViewMode} />
-          <div className="h-8 w-[1px] bg-border-standard opacity-40 mx-1" />
+          <div className="h-6 w-[1px] bg-border-standard opacity-40 mx-1" />
           <button 
             onClick={() => openActionModal("add", virtualRoot)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-brand text-white rounded-xl text-[10px] font-black uppercase tracking-[0.25em] hover:bg-brand-hover transition-all shadow-lg shadow-brand/10 active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-brand-hover transition-all shadow-lg shadow-brand/10 active:scale-95"
           >
-            <PlusCircle size={16} strokeWidth={3} /> {isTrainee ? "ADD" : "ARCHITECT"}
+            <PlusCircle size={14} strokeWidth={3} /> {isTrainee ? "ADD" : "ARCHITECT"}
           </button>
         </div>
         
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-brand transition-all" size={16} strokeWidth={3} />
+            <Search className={cn("absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary group-focus-within:text-brand transition-all", searchQuery && "text-brand")} size={14} strokeWidth={3} />
             <input 
               type="text" 
               placeholder="SEARCH..." 
-              className="pl-10 pr-6 py-2.5 bg-white border border-border-standard rounded-xl text-[11px] font-black uppercase tracking-[0.2em] outline-none w-64 transition-all shadow-sm focus:border-brand/40"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-2 bg-white border border-border-standard rounded-xl text-[10px] font-black uppercase tracking-[0.2em] outline-none w-56 transition-all shadow-sm focus:border-brand/40"
             />
           </div>
-          <div className="h-8 w-[1px] bg-border-standard opacity-40 mx-1" />
-          <button className="p-2.5 bg-white hover:bg-surface-soft rounded-xl text-text-tertiary transition-all border border-border-standard shadow-sm active:scale-90">
-            <Settings size={20} strokeWidth={2.5} />
+          <div className="h-6 w-[1px] bg-border-standard opacity-40 mx-1" />
+          <button className="p-2 bg-white hover:bg-surface-soft rounded-lg text-text-tertiary transition-all border border-border-standard shadow-sm active:scale-90">
+            <Settings size={18} strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -773,6 +989,8 @@ export default function RoadmapPage() {
                     onSelect={setSelectedTopic} 
                     selectedId={selectedTopic?.id} 
                     depth={0} 
+                    matchesSearch={matchesSearch}
+                    hasMatchingChild={hasMatchingChild}
                   />
                   
                   <div className="mt-40 mb-80 flex flex-col items-center">
@@ -790,19 +1008,21 @@ export default function RoadmapPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="max-w-5xl mx-auto p-12 py-20"
+              className="max-w-4xl mx-auto p-6 md:p-12 py-10"
             >
-              <div className="mb-12">
-                <h2 className="text-3xl font-display font-black text-text-primary uppercase tracking-tight mb-2">Curriculum Checklist</h2>
-                <p className="text-text-tertiary text-sm font-bold uppercase tracking-widest">Global hierarchical view of all training modules</p>
+              <div className="mb-8">
+                <h2 className="text-2xl font-display font-black text-text-primary uppercase tracking-tight mb-1">Curriculum Checklist</h2>
+                <p className="text-text-tertiary text-xs font-bold uppercase tracking-widest">Global hierarchical view of all training modules</p>
               </div>
 
-              <div className="bg-white rounded-[2.5rem] border border-border-subtle shadow-card overflow-hidden">
-                <div className="p-10 space-y-2">
+              <div className="bg-white rounded-2xl border border-border-subtle shadow-card overflow-hidden">
+                <div className="p-4 md:p-6 space-y-1">
                   <ListViewRow 
                     topic={virtualRoot} 
                     onSelect={setSelectedTopic} 
                     selectedId={selectedTopic?.id}
+                    matchesSearch={matchesSearch}
+                    hasMatchingChild={hasMatchingChild}
                   />
                 </div>
               </div>
@@ -846,6 +1066,7 @@ export default function RoadmapPage() {
              <DetailPanel 
                topic={selectedTopic} 
                role={role || "trainee"}
+               traineeName={trainee.name}
                onClose={() => setSelectedTopic(null)} 
                onEdit={(t) => openActionModal("edit", t)}
                onDelete={(t) => openActionModal("delete", t)}
@@ -853,8 +1074,31 @@ export default function RoadmapPage() {
                onMove={(t) => openActionModal("move", t)}
                onCopy={(t) => openActionModal("copy", t)}
                onAddResource={(t) => openActionModal("resource", t)}
+               onStatusChange={(t, s) => handleAction('status', { id: t.id, status: s })}
+               onDeleteResource={(tid, rid) => handleAction('resource-delete', { id: tid, resourceId: rid })}
              />
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Feedback */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, x: "-50%" }}
+            className={cn(
+              "fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl shadow-elevated z-[300] flex items-center gap-3 border backdrop-blur-md",
+              toast.type === 'success' ? "bg-white border-status-success/20 text-status-success" : 
+              toast.type === 'error' ? "bg-rose-50 border-rose-200 text-rose-600" :
+              "bg-brand/5 border-brand/20 text-brand"
+            )}
+          >
+            {toast.type === 'success' ? <CheckCircle2 size={18} /> : 
+             toast.type === 'error' ? <AlertCircle size={18} /> : <Info size={18} />}
+            <span className="text-[10px] font-black uppercase tracking-[0.1em]">{toast.message}</span>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -874,20 +1118,20 @@ export default function RoadmapPage() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white w-full max-w-lg rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.2)] relative z-10 overflow-hidden border-4 border-border-standard"
+              className="bg-white w-full max-w-md rounded-2xl shadow-elevated relative z-10 overflow-hidden border border-border-standard"
             >
-              <div className="p-12">
-                <div className="flex items-center gap-6 mb-10">
-                  <div className="p-4 bg-brand/5 text-brand rounded-[1.5rem] border-2 border-brand/10 shadow-sm">
-                    {activeModal === "add" ? <PlusCircle size={32} strokeWidth={2.5} /> : 
-                     activeModal === "edit" ? <Edit3 size={32} strokeWidth={2.5} /> : 
-                     activeModal === "delete" ? <Trash2 size={32} strokeWidth={2.5} /> :
-                     activeModal === "move" ? <GitBranch size={32} strokeWidth={2.5} /> :
-                     activeModal === "copy" ? <Copy size={32} strokeWidth={2.5} /> :
-                     <Library size={32} strokeWidth={2.5} />}
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-brand/5 text-brand rounded-xl border border-brand/10 shadow-sm">
+                    {activeModal === "add" ? <PlusCircle size={20} strokeWidth={2.5} /> : 
+                     activeModal === "edit" ? <Edit3 size={20} strokeWidth={2.5} /> : 
+                     activeModal === "delete" ? <Trash2 size={20} strokeWidth={2.5} /> :
+                     activeModal === "move" ? <GitBranch size={20} strokeWidth={2.5} /> :
+                     activeModal === "copy" ? <Copy size={20} strokeWidth={2.5} /> :
+                     <Library size={20} strokeWidth={2.5} />}
                   </div>
                   <div>
-                    <h3 className="text-2xl font-display font-black tracking-tight text-text-primary uppercase leading-tight">
+                    <h3 className="text-base font-display font-black tracking-tight text-text-primary uppercase leading-none">
                       {activeModal === "delete" ? "Security Protocol" : 
                        activeModal === "edit" ? "Modify Node" : 
                        activeModal === "move" ? "Migration Orchestration" :
@@ -895,165 +1139,222 @@ export default function RoadmapPage() {
                        activeModal === "resource" ? "Knowledge Asset" :
                        "Architect Node"}
                     </h3>
-                    <p className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.3em] mt-2 opacity-60">
+                    <p className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] mt-1 opacity-60">
                       {activeModal === "delete" ? "Irreversible curriculum erasure" : "Curriculum Synchronization Service"}
                     </p>
                   </div>
                 </div>
 
                 {activeModal === "delete" ? (
-                  <div className="space-y-8">
-                    <div className="p-8 bg-rose-50 rounded-[2rem] border-2 border-rose-100/50 shadow-inner">
-                      <p className="text-[15px] font-medium text-rose-900 leading-relaxed">
+                  <div className="space-y-5">
+                    <div className="p-4 bg-rose-50 rounded-xl border border-rose-100 shadow-inner">
+                      <p className="text-xs font-medium text-rose-900 leading-relaxed">
                         Are you sure you want to remove <span className="font-bold underline">{modalContext?.title}</span>?
                       </p>
-                      <p className="text-[11px] font-black text-rose-700/60 uppercase tracking-widest mt-4">
+                      <p className="text-[9px] font-black text-rose-700/60 uppercase tracking-widest mt-2">
                         DANGER: Erases node and {modalContext?.children?.length || 0} sub-modules permanently.
                       </p>
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex gap-2">
                       <button 
                         onClick={() => setActiveModal(null)}
-                        className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard hover:bg-white transition-all active:scale-95 shadow-sm"
+                        className="flex-1 py-1.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
                       >
                         CLOSE
                       </button>
                       <button 
-                        onClick={() => setActiveModal(null)}
-                        className="flex-1 py-5 bg-rose-500 text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-rose-500/30 hover:brightness-110 active:scale-95 transition-all border-b-4 border-rose-600"
+                        onClick={() => handleAction('delete', { id: modalContext?.id })}
+                        className="flex-1 py-2.5 bg-rose-500 text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all"
                       >
                         EXECUTE DELETE
                       </button>
                     </div>
                   </div>
                 ) : activeModal === "move" ? (
-                  <div className="space-y-8">
-                    <p className="text-[13px] font-medium text-text-secondary leading-relaxed">
-                      Select a strategic destination for <span className="font-bold text-text-primary">"{modalContext?.title}"</span>. Child nodes and metadata will remain intact.
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    handleAction('move', { id: modalContext?.id, newParentId: formData.get('parentId') });
+                  }} className="space-y-5">
+                    <p className="text-[11px] font-medium text-text-secondary leading-relaxed">
+                      Select a strategic destination for <span className="font-bold text-text-primary">"{modalContext?.title}"</span>.
                     </p>
-                    <div className="space-y-6">
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Origin Context</label>
-                        <div className="p-5 bg-surface-soft border-2 border-border-standard rounded-[1.25rem] text-[11px] font-black text-text-tertiary truncate uppercase tracking-widest opacity-60">
-                          {getBreadcrumbs(modalContext?.id || "")}
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Target Parent Module</label>
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5 opacity-60">Target Parent Module</label>
                         <div className="relative group">
-                           <select className="w-full appearance-none px-6 py-5 bg-white border-2 border-border-standard rounded-[1.5rem] text-sm font-black text-text-primary outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all pr-14 shadow-sm group-hover:border-border-subtle cursor-pointer">
+                           <select name="parentId" defaultValue={modalContext?.parentId || 'root'} className="w-full appearance-none px-4 py-2 bg-white border border-border-standard rounded-lg text-[11px] font-black text-text-primary outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all pr-10 shadow-sm cursor-pointer">
                               {getFilteredNodes(modalContext?.id).map(t => (
                                 <option key={t.id} value={t.id}>{t.title}</option>
                               ))}
                            </select>
-                           <ChevronDown size={20} strokeWidth={3} className="absolute right-6 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none group-focus-within:text-brand" />
+                           <ChevronDown size={14} strokeWidth={3} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none group-focus-within:text-brand" />
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-4 pt-4">
-                       <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard shadow-sm active:scale-95 transition-all hover:bg-white">CANCEL</button>
-                       <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-brand/30 border-b-4 border-brand-hover active:scale-95 transition-all">MIGRATE NODE</button>
+                    <div className="flex gap-2 pt-1">
+                       <button type="button" onClick={() => setActiveModal(null)} className="flex-1 py-2.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm active:scale-95 transition-all hover:bg-slate-50">CANCEL</button>
+                       <button type="submit" className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all">MIGRATE NODE</button>
                     </div>
-                  </div>
+                  </form>
                 ) : activeModal === "resource" ? (
-                  <div className="space-y-8">
-                    <div className="space-y-6">
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Identifier</label>
-                        <input type="text" placeholder="Title of the asset..." className="w-full px-6 py-5 bg-surface-soft border-2 border-border-standard rounded-[1.5rem] text-sm font-black outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all focus:bg-white shadow-sm" />
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const resource = {
+                      id: Math.random().toString(36).substr(2, 9),
+                      title: formData.get('title') as string,
+                      type: formData.get('type') as ResourceType,
+                      url: formData.get('url') as string,
+                      note: formData.get('note') as string,
+                      addedBy: role === 'manager' ? 'Manager' : trainee.name,
+                      addedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    };
+                    handleAction('resource-add', { id: modalContext?.id, resource });
+                  }} className="space-y-5">
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">Asset Title</label>
+                        <input name="title" required type="text" placeholder="Title of the asset..." className="w-full px-4 py-2 bg-slate-50 border border-border-standard rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all focus:bg-white shadow-sm" />
                       </div>
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Asset Category</label>
-                        <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">Category</label>
+                        <div className="grid grid-cols-4 gap-1.5">
                            {Object.values(ResourceType).map(type => (
-                             <button key={type} className="px-5 py-4 bg-surface-soft border-2 border-border-standard rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest text-text-secondary hover:border-brand hover:text-brand transition-all shadow-sm active:scale-95">{type}</button>
+                             <label key={type} className="relative cursor-pointer group">
+                               <input type="radio" name="type" value={type} required className="peer sr-only" defaultChecked={type === ResourceType.Article} />
+                               <div className="px-1 py-2 bg-slate-50 border border-border-standard rounded-lg text-[7px] font-black uppercase tracking-widest text-text-secondary text-center peer-checked:border-brand peer-checked:text-brand peer-checked:bg-brand/5 transition-all shadow-sm group-hover:bg-white truncate">
+                                 {type}
+                               </div>
+                             </label>
                            ))}
                         </div>
                       </div>
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Strategic URL</label>
+                      <div className="space-y-1.5">
+                        <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">URL</label>
                         <div className="relative group">
-                          <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-text-tertiary" size={16} />
-                          <input type="text" placeholder="https://external-asset.io/..." className="w-full pl-14 pr-6 py-5 bg-surface-soft border-2 border-border-standard rounded-[1.5rem] text-sm font-medium outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all focus:bg-white shadow-sm" />
+                          <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary" size={12} />
+                          <input name="url" required type="url" placeholder="https://..." className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-border-standard rounded-lg text-xs font-medium outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all focus:bg-white shadow-sm" />
                         </div>
                       </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">Note (Optional)</label>
+                        <textarea name="note" rows={2} placeholder="Optional study context..." className="w-full px-4 py-2 bg-slate-50 border border-border-standard rounded-lg text-[10px] font-medium text-text-secondary outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all shadow-sm focus:bg-white resize-none" />
+                      </div>
                     </div>
-                    <div className="flex gap-4">
-                       <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard shadow-sm active:scale-95 transition-all animate-pulse">ABORT</button>
-                       <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-brand/30 border-b-4 border-brand-hover active:scale-95 transition-all">LINK KNOWLEDGE</button>
+                    <div className="flex gap-2">
+                       <button type="button" onClick={() => setActiveModal(null)} className="flex-1 py-2.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm active:scale-95 transition-all hover:bg-slate-50">ABORT</button>
+                       <button type="submit" className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all">LINK KNOWLEDGE</button>
                     </div>
-                  </div>
+                  </form>
                 ) : activeModal === "copy" ? (
-                   <div className="space-y-8">
-                      <p className="text-[13px] font-medium text-text-secondary leading-relaxed">
-                        Replicating strategic pattern: <span className="font-bold text-text-primary">"{modalContext?.title}"</span>. This will instantiate a new branch context with inherited sub-structures.
+                   <div className="space-y-5">
+                      <p className="text-[11px] font-medium text-text-secondary leading-relaxed">
+                        Replicating strategic pattern: <span className="font-bold text-text-primary">"{modalContext?.title}"</span>.
                       </p>
-                      <div className="p-6 bg-brand/5 border-2 border-brand/10 rounded-[1.75rem] shadow-sm">
-                         <div className="flex items-center gap-4">
-                            <div className="p-2 bg-brand text-white rounded-lg">
-                               <Copy size={16} strokeWidth={3} />
+                      <div className="p-4 bg-brand/5 border border-brand/10 rounded-xl shadow-sm">
+                         <div className="flex items-center gap-3">
+                            <div className="p-1.5 bg-brand text-white rounded-lg">
+                               <Copy size={14} strokeWidth={3} />
                             </div>
-                            <span className="text-[10px] font-black text-brand uppercase tracking-[0.25em]">Ready for replication</span>
+                            <span className="text-[8px] font-black text-brand uppercase tracking-[0.2em]">Ready for replication</span>
                          </div>
                       </div>
-                      <div className="flex gap-4">
-                        <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard shadow-sm hover:bg-white active:scale-95 transition-all">ABORT</button>
-                        <button onClick={() => setActiveModal(null)} className="flex-1 py-5 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-brand/30 border-b-4 border-brand-hover active:scale-95 transition-all">REPLICATE BRANCH</button>
+                      <div className="flex gap-2">
+                        <button onClick={() => setActiveModal(null)} className="flex-1 py-2.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm hover:bg-slate-50 active:scale-95 transition-all">ABORT</button>
+                        <button onClick={() => {
+                          showToast("Feature coming soon in prototype", "info");
+                          setActiveModal(null);
+                        }} className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all">REPLICATE BRANCH</button>
                       </div>
                    </div>
                 ) : (
-                  <div className="space-y-8">
-                    <div className="space-y-6">
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Module Title</label>
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    if (activeModal === 'add') {
+                      const newNode: RoadmapTopic = {
+                        id: Math.random().toString(36).substr(2, 9),
+                        title: formData.get('title') as string,
+                        description: formData.get('description') as string,
+                        status: TopicStatus.NotStarted,
+                        isCountable: formData.get('isCountable') === 'on',
+                        parentId: formData.get('parentId') as string,
+                        children: [],
+                        resources: []
+                      };
+                      handleAction('add', { parentId: newNode.parentId, newNode });
+                    } else if (activeModal === 'edit') {
+                      handleAction('edit', { 
+                        id: modalContext?.id, 
+                        updates: { 
+                          title: formData.get('title'), 
+                          description: formData.get('description'),
+                          isCountable: formData.get('isCountable') === 'on'
+                        } 
+                      });
+                    }
+                  }} className="space-y-5">
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">Module Title</label>
                         <input 
+                          name="title"
+                          required
                           type="text" 
                           defaultValue={activeModal === "edit" ? modalContext?.title : ""}
                           placeholder="e.g. Distributed Consensus Systems"
-                          className="w-full px-7 py-5 bg-surface-soft border-2 border-border-standard rounded-[1.75rem] text-[15px] font-black text-text-primary outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all shadow-sm focus:bg-white"
+                          className="w-full px-4 py-2 bg-slate-50 border border-border-standard rounded-lg text-xs font-black text-text-primary outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all shadow-sm focus:bg-white"
                         />
                       </div>
-                      <div className="space-y-3">
-                         <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Architectural Rationale</label>
+                      <div className="space-y-1.5">
+                         <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">Architectural Rationale</label>
                          <textarea 
+                          name="description"
                           defaultValue={activeModal === "edit" ? modalContext?.description : ""}
                           placeholder="Define the strategic objectives for this phase..."
-                          rows={4}
-                          className="w-full px-7 py-5 bg-surface-soft border-2 border-border-standard rounded-[1.75rem] text-sm font-medium text-text-secondary outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all shadow-sm resize-none focus:bg-white"
+                          rows={3}
+                          className="w-full px-4 py-2 bg-slate-50 border border-border-standard rounded-lg text-[11px] font-medium text-text-secondary outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all shadow-sm resize-none focus:bg-white"
                          />
                       </div>
+                      <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-border-standard">
+                         <input type="checkbox" name="isCountable" id="isCountable" defaultChecked={activeModal === 'edit' ? modalContext?.isCountable : true} className="w-4 h-4 rounded border-border-standard text-brand focus:ring-brand" />
+                         <label htmlFor="isCountable" className="text-[10px] font-black text-text-secondary uppercase tracking-widest cursor-pointer">Countable toward mastery progress</label>
+                      </div>
                       {activeModal === "add" && (
-                         <div className="space-y-3">
-                            <label className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.25em] ml-1">Anchor Context</label>
+                         <div className="space-y-1.5">
+                            <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">Anchor Context</label>
                             <div className="relative group">
                                <select 
-                                 defaultValue={modalContext?.id}
-                                 className="w-full appearance-none px-7 py-5 bg-white border-2 border-border-standard rounded-[1.75rem] text-sm font-black text-brand outline-none focus:ring-8 focus:ring-brand/[0.04] focus:border-brand/40 transition-all pr-14 shadow-sm group-hover:border-border-subtle cursor-pointer"
+                                 name="parentId"
+                                 defaultValue={modalContext?.id || 'root'}
+                                 className="w-full appearance-none px-4 py-2 bg-white border border-border-standard rounded-lg text-[11px] font-black text-brand outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all pr-10 shadow-sm cursor-pointer"
                                >
                                   {allTopics.map(t => (
                                      <option key={t.id} value={t.id}>{t.title}</option>
                                   ))}
                                </select>
-                               <ChevronDown size={20} strokeWidth={3} className="absolute right-7 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none group-focus-within:text-brand" />
+                               <ChevronDown size={14} strokeWidth={3} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none group-focus-within:text-brand" />
                             </div>
                          </div>
                       )}
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex gap-2">
                       <button 
+                        type="button"
                         onClick={() => setActiveModal(null)}
-                        className="flex-1 py-5 bg-surface-soft text-text-secondary font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] border-2 border-border-standard shadow-sm hover:bg-white active:scale-95 transition-all"
+                        className="flex-1 py-1.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm hover:bg-slate-50 active:scale-95 transition-all"
                       >
                         ABORT
                       </button>
                       <button 
-                        onClick={() => setActiveModal(null)}
-                        className="flex-1 py-5 bg-brand text-white font-black text-[11px] uppercase tracking-widest rounded-[1.5rem] shadow-xl shadow-brand/30 border-b-4 border-brand-hover active:scale-95 transition-all"
+                        type="submit"
+                        className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all"
                       >
                         {activeModal === "edit" ? (role === "manager" ? "SAVE CHANGES" : "PROPOSE CHANGES") : (role === "manager" ? "COMMIT TO PATH" : "SUBMIT PROPOSAL")}
                       </button>
                     </div>
-                  </div>
+                  </form>
                 )}
               </div>
             </motion.div>
