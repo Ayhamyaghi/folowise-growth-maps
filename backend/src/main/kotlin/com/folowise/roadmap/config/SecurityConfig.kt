@@ -1,5 +1,7 @@
 package com.folowise.roadmap.config
 
+import com.folowise.roadmap.security.Http401UnauthorizedEntryPoint
+import com.folowise.roadmap.security.Http403AccessDeniedHandler
 import com.folowise.roadmap.security.JwtAuthenticationFilter
 import com.folowise.roadmap.security.JwtProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -21,7 +23,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableConfigurationProperties(JwtProperties::class)
 class SecurityConfig(
-    private val jwtAuthenticationFilter: JwtAuthenticationFilter
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+    private val unauthorizedEntryPoint: Http401UnauthorizedEntryPoint,
+    private val accessDeniedHandler: Http403AccessDeniedHandler
 ) {
 
     @Bean
@@ -40,6 +44,10 @@ class SecurityConfig(
                         "/api/v1/auth/login"
                     ).permitAll()
                     .anyRequest().authenticated()
+            }
+            .exceptionHandling {
+                it.authenticationEntryPoint(unauthorizedEntryPoint)
+                it.accessDeniedHandler(accessDeniedHandler)
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
