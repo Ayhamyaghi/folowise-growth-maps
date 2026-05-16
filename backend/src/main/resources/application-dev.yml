@@ -22,3 +22,11 @@ management:
 springdoc:
   swagger-ui:
     try-it-out-enabled: true
+
+app:
+  jwt:
+    # DEV-ONLY fallback secret. Never use this value outside local development.
+    # Decoded value: "folowise-dev-only-jwt-secret-key-never-use-in-production-2026"
+    # Length: 62 bytes = 496 bits — satisfies JJWT HS256 minimum of 256 bits.
+    secret: ${JWT_SECRET:Zm9sb3dpc2UtZGV2LW9ubHktand0LXNlY3JldC1rZXktbmV2ZXItdXNlLWluLXByb2R1Y3Rpb24tMjAyNg==}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}

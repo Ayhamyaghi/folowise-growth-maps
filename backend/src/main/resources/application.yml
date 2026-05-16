@@ -36,3 +36,11 @@ springdoc:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+app:
+  jwt:
+    # Base64-encoded secret — minimum 256 bits (32 bytes decoded) for HS256.
+    # Must be supplied via environment variable in all non-dev environments.
+    secret: ${JWT_SECRET}
+    # Token lifetime in milliseconds. Default: 24 hours.
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
