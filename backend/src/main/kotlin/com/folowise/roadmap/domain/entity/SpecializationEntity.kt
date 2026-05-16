@@ -1,7 +1,6 @@
 package com.folowise.roadmap.domain.entity
 
 import jakarta.persistence.*
-import java.time.OffsetDateTime
 import java.util.UUID
 
 /**
@@ -16,15 +15,9 @@ open class SpecializationEntity(
     @Column(name = "name", nullable = false, unique = true, length = 255)
     open var name: String
 
-) {
+) : BaseAuditableEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
     open var id: UUID? = null
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    open var createdAt: OffsetDateTime = OffsetDateTime.now()
-
-    @Column(name = "updated_at", nullable = false)
-    open var updatedAt: OffsetDateTime = OffsetDateTime.now()
 }

@@ -37,7 +37,7 @@ open class RoadmapTopicEntity(
     @Column(name = "title", nullable = false, length = 255)
     open var title: String
 
-) {
+) : BaseAuditableEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
@@ -75,10 +75,4 @@ open class RoadmapTopicEntity(
 
     @Column(name = "last_activity_at")
     open var lastActivityAt: OffsetDateTime? = null
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    open var createdAt: OffsetDateTime = OffsetDateTime.now()
-
-    @Column(name = "updated_at", nullable = false)
-    open var updatedAt: OffsetDateTime = OffsetDateTime.now()
 }

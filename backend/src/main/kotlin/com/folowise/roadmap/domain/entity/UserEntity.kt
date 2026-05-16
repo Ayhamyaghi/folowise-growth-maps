@@ -4,7 +4,6 @@ import com.folowise.roadmap.domain.enums.UserRole
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
-import java.time.OffsetDateTime
 import java.util.UUID
 
 /**
@@ -30,7 +29,7 @@ open class UserEntity(
     @Column(name = "role", nullable = false)
     open var role: UserRole
 
-) {
+) : BaseAuditableEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
@@ -38,10 +37,4 @@ open class UserEntity(
 
     @Column(name = "is_active", nullable = false)
     open var isActive: Boolean = true
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    open var createdAt: OffsetDateTime = OffsetDateTime.now()
-
-    @Column(name = "updated_at", nullable = false)
-    open var updatedAt: OffsetDateTime = OffsetDateTime.now()
 }

@@ -4,7 +4,6 @@ import com.folowise.roadmap.domain.enums.ResourceType
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
-import java.time.OffsetDateTime
 import java.util.UUID
 
 /**
@@ -38,7 +37,7 @@ open class TopicResourceEntity(
     @Column(name = "resource_type", nullable = false)
     open var resourceType: ResourceType
 
-) {
+) : BaseAuditableEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
@@ -50,10 +49,4 @@ open class TopicResourceEntity(
 
     @Column(name = "note", columnDefinition = "TEXT")
     open var note: String? = null
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    open var createdAt: OffsetDateTime = OffsetDateTime.now()
-
-    @Column(name = "updated_at", nullable = false)
-    open var updatedAt: OffsetDateTime = OffsetDateTime.now()
 }

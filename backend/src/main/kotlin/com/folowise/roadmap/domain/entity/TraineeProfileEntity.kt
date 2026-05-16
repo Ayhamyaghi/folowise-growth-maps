@@ -1,7 +1,6 @@
 package com.folowise.roadmap.domain.entity
 
 import jakarta.persistence.*
-import java.time.OffsetDateTime
 import java.util.UUID
 
 /**
@@ -23,7 +22,7 @@ open class TraineeProfileEntity(
     @JoinColumn(name = "specialization_id", nullable = false)
     open var specialization: SpecializationEntity
 
-) {
+) : BaseAuditableEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
@@ -35,10 +34,4 @@ open class TraineeProfileEntity(
     // Populated when a manager flags a trainee (e.g. "Low progress", "Pending review").
     @Column(name = "attention_reason", length = 512)
     open var attentionReason: String? = null
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    open var createdAt: OffsetDateTime = OffsetDateTime.now()
-
-    @Column(name = "updated_at", nullable = false)
-    open var updatedAt: OffsetDateTime = OffsetDateTime.now()
 }

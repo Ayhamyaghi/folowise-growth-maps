@@ -49,7 +49,7 @@ open class RoadmapChangeRequestEntity(
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     open var description: String
 
-) {
+) : BaseAuditableEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
@@ -86,10 +86,4 @@ open class RoadmapChangeRequestEntity(
     // Set when the manager takes action. Null while PENDING.
     @Column(name = "reviewed_at")
     open var reviewedAt: OffsetDateTime? = null
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    open var createdAt: OffsetDateTime = OffsetDateTime.now()
-
-    @Column(name = "updated_at", nullable = false)
-    open var updatedAt: OffsetDateTime = OffsetDateTime.now()
 }

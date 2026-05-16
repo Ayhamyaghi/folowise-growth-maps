@@ -4,7 +4,6 @@ import com.folowise.roadmap.domain.enums.RoadmapStatus
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
-import java.time.OffsetDateTime
 import java.util.UUID
 
 /**
@@ -28,7 +27,7 @@ open class RoadmapEntity(
     @Column(name = "title", nullable = false, length = 255)
     open var title: String
 
-) {
+) : BaseAuditableEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", updatable = false, nullable = false)
@@ -41,10 +40,4 @@ open class RoadmapEntity(
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", nullable = false)
     open var status: RoadmapStatus = RoadmapStatus.ACTIVE
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    open var createdAt: OffsetDateTime = OffsetDateTime.now()
-
-    @Column(name = "updated_at", nullable = false)
-    open var updatedAt: OffsetDateTime = OffsetDateTime.now()
 }
