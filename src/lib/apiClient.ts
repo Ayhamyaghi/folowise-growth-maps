@@ -27,8 +27,16 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   }
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `Request failed: ${res.status}`);
+    // Try to extract the backend's error message from the JSON ApiError body.
+    let message = `Request failed: ${res.status}`;
+    try {
+      const errorBody = await res.json();
+      if (errorBody.message) message = errorBody.message;
+    } catch {
+      const text = await res.text();
+      if (text) message = text;
+    }
+    throw new Error(message);
   }
 
   return res.json() as Promise<T>;
@@ -72,6 +80,13 @@ export interface ApiRoadmapTree {
   topics: ApiTopicNode[];
 }
 
+export interface AddTopicRequest {
+  title: string;
+  description?: string;
+  parentId?: string | null;
+  countable: boolean;
+}
+
 export const authApi = {
   me: () => apiFetch<CurrentUserResponse>('/auth/me'),
 };
@@ -79,4 +94,10 @@ export const authApi = {
 export const roadmapApi = {
   getTree: (roadmapId: string) =>
     apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/tree`),
+
+  addTopic: (roadmapId: string, request: AddTopicRequest) =>
+    apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
 };

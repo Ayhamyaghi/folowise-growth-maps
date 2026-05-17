@@ -678,6 +678,8 @@ export default function RoadmapPage() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [activeModal, setActiveModal] = useState<"add" | "edit" | "delete" | "move" | "copy" | "resource" | null>(null);
   const [modalContext, setModalContext] = useState<RoadmapTopic | null>(null);
+  const [isModalSubmitting, setIsModalSubmitting] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -914,6 +916,40 @@ export default function RoadmapPage() {
   const openActionModal = (type: "add" | "edit" | "delete" | "move" | "copy" | "resource", topic?: RoadmapTopic) => {
     setModalContext(topic || null);
     setActiveModal(type);
+    setModalError(null);
+    setIsModalSubmitting(false);
+  };
+
+  const handleAddTopic = async (formData: FormData) => {
+    if (isTrainee) {
+      showToast("Proposal submitted for manager approval", "info");
+      setActiveModal(null);
+      return;
+    }
+
+    const title = ((formData.get('title') as string) ?? '').trim();
+    if (!title) {
+      setModalError('Title must not be blank');
+      return;
+    }
+    const description = ((formData.get('description') as string) ?? '').trim() || undefined;
+    const parentIdRaw = formData.get('parentId') as string;
+    const parentId = (!parentIdRaw || parentIdRaw === 'root') ? null : parentIdRaw;
+    const countable = formData.get('isCountable') === 'on';
+
+    setIsModalSubmitting(true);
+    setModalError(null);
+    try {
+      const updated = await roadmapApi.addTopic(ROADMAP_ID, { title, description, parentId, countable });
+      setRoadmapTitle(updated.title);
+      setRoadmapData(updated.topics.map(mapApiTopic));
+      setActiveModal(null);
+      showToast('Topic added successfully');
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to add topic');
+    } finally {
+      setIsModalSubmitting(false);
+    }
   };
 
   if (apiLoading) {
@@ -1329,25 +1365,15 @@ export default function RoadmapPage() {
                     e.preventDefault();
                     const formData = new FormData(e.currentTarget);
                     if (activeModal === 'add') {
-                      const newNode: RoadmapTopic = {
-                        id: Math.random().toString(36).substr(2, 9),
-                        title: formData.get('title') as string,
-                        description: formData.get('description') as string,
-                        status: TopicStatus.NotStarted,
-                        isCountable: formData.get('isCountable') === 'on',
-                        parentId: formData.get('parentId') as string,
-                        children: [],
-                        resources: []
-                      };
-                      handleAction('add', { parentId: newNode.parentId, newNode });
+                      handleAddTopic(formData);
                     } else if (activeModal === 'edit') {
-                      handleAction('edit', { 
-                        id: modalContext?.id, 
-                        updates: { 
-                          title: formData.get('title'), 
+                      handleAction('edit', {
+                        id: modalContext?.id,
+                        updates: {
+                          title: formData.get('title'),
                           description: formData.get('description'),
                           isCountable: formData.get('isCountable') === 'on'
-                        } 
+                        }
                       });
                     }
                   }} className="space-y-5">
@@ -1379,14 +1405,15 @@ export default function RoadmapPage() {
                       </div>
                       {activeModal === "add" && (
                          <div className="space-y-1.5">
-                            <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">Anchor Context</label>
+                            <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">Parent Module</label>
                             <div className="relative group">
-                               <select 
+                               <select
                                  name="parentId"
-                                 defaultValue={modalContext?.id || 'root'}
+                                 defaultValue={(!modalContext || modalContext.id === 'root') ? '' : modalContext.id}
                                  className="w-full appearance-none px-4 py-2 bg-white border border-border-standard rounded-lg text-[11px] font-black text-brand outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all pr-10 shadow-sm cursor-pointer"
                                >
-                                  {allTopics.map(t => (
+                                  <option value="">Top Level (No Parent)</option>
+                                  {flattenTopics(roadmapData).map(t => (
                                      <option key={t.id} value={t.id}>{t.title}</option>
                                   ))}
                                </select>
@@ -1395,19 +1422,29 @@ export default function RoadmapPage() {
                          </div>
                       )}
                     </div>
+                    {modalError && (
+                      <div className="px-4 py-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-[10px] font-black uppercase tracking-[0.15em]">
+                        {modalError}
+                      </div>
+                    )}
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setActiveModal(null)}
                         className="flex-1 py-1.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm hover:bg-slate-50 active:scale-95 transition-all"
                       >
                         ABORT
                       </button>
-                      <button 
+                      <button
                         type="submit"
-                        className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all"
+                        disabled={activeModal === 'add' && isModalSubmitting}
+                        className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all disabled:opacity-60 disabled:pointer-events-none"
                       >
-                        {activeModal === "edit" ? (role === "manager" ? "SAVE CHANGES" : "PROPOSE CHANGES") : (role === "manager" ? "COMMIT TO PATH" : "SUBMIT PROPOSAL")}
+                        {activeModal === 'add' && isModalSubmitting
+                          ? 'COMMITTING...'
+                          : activeModal === "edit"
+                            ? (role === "manager" ? "SAVE CHANGES" : "PROPOSE CHANGES")
+                            : (role === "manager" ? "COMMIT TO PATH" : "SUBMIT PROPOSAL")}
                       </button>
                     </div>
                   </form>

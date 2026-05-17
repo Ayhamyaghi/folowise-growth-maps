@@ -7,6 +7,7 @@ import com.folowise.roadmap.security.JwtProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
@@ -43,6 +44,7 @@ class SecurityConfig(
                         "/swagger-ui.html",
                         "/api/v1/auth/login"
                     ).permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/roadmaps/*/topics").hasRole("MANAGER")
                     .anyRequest().authenticated()
             }
             .exceptionHandling {
