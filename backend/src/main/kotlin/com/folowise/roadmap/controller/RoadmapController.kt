@@ -1,6 +1,7 @@
 package com.folowise.roadmap.controller
 
 import com.folowise.roadmap.dto.roadmap.AddRoadmapTopicRequest
+import com.folowise.roadmap.dto.roadmap.EditRoadmapTopicRequest
 import com.folowise.roadmap.dto.roadmap.RoadmapTreeResponse
 import com.folowise.roadmap.service.RoadmapMutationService
 import com.folowise.roadmap.service.RoadmapQueryService
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -33,4 +35,12 @@ class RoadmapController(
     ): ResponseEntity<RoadmapTreeResponse> =
         ResponseEntity.status(HttpStatus.CREATED)
             .body(roadmapMutationService.addTopic(roadmapId, request))
+
+    @PutMapping("/{roadmapId}/topics/{topicId}")
+    fun editTopic(
+        @PathVariable roadmapId: UUID,
+        @PathVariable topicId: UUID,
+        @Valid @RequestBody request: EditRoadmapTopicRequest
+    ): ResponseEntity<RoadmapTreeResponse> =
+        ResponseEntity.ok(roadmapMutationService.editTopic(roadmapId, topicId, request))
 }

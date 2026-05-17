@@ -3,6 +3,7 @@ package com.folowise.roadmap.service
 import com.folowise.roadmap.domain.entity.RoadmapTopicEntity
 import com.folowise.roadmap.domain.enums.TopicStatus
 import com.folowise.roadmap.dto.roadmap.AddRoadmapTopicRequest
+import com.folowise.roadmap.dto.roadmap.EditRoadmapTopicRequest
 import com.folowise.roadmap.dto.roadmap.RoadmapTreeResponse
 import com.folowise.roadmap.repository.RoadmapRepository
 import com.folowise.roadmap.repository.RoadmapTopicRepository
@@ -62,6 +63,39 @@ class RoadmapMutationService(
             isCountable = request.countable
             displayOrder = nextOrder
         }
+
+        roadmapTopicRepository.save(topic)
+
+        return roadmapQueryService.getRoadmapTree(roadmapId)
+    }
+
+    /**
+     * Updates the mutable fields of an existing topic and returns the refreshed [RoadmapTreeResponse].
+     *
+     * Rules:
+     *  - Roadmap must exist.
+     *  - Topic must exist and belong to the same roadmap.
+     *  - Only [title], [description], and [isCountable] are updated.
+     *  - [parentId], [displayOrder], and [status] are not changed.
+     */
+    @Transactional
+    fun editTopic(roadmapId: UUID, topicId: UUID, request: EditRoadmapTopicRequest): RoadmapTreeResponse {
+        roadmapRepository.findById(roadmapId)
+            .orElseThrow { NoSuchElementException("Roadmap not found: $roadmapId") }
+
+        val topic = roadmapTopicRepository.findById(topicId)
+            .orElseThrow { NoSuchElementException("Topic not found: $topicId") }
+
+        require(roadmapTopicRepository.existsByIdAndRoadmapId(topicId, roadmapId)) {
+            "Topic does not belong to this roadmap"
+        }
+
+        val trimmedTitle = request.title.trim()
+        require(trimmedTitle.isNotEmpty()) { "Title must not be blank" }
+
+        topic.title = trimmedTitle
+        topic.description = request.description?.trim()?.takeIf { it.isNotEmpty() }
+        topic.isCountable = request.countable
 
         roadmapTopicRepository.save(topic)
 

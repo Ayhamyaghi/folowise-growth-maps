@@ -87,6 +87,12 @@ export interface AddTopicRequest {
   countable: boolean;
 }
 
+export interface EditTopicRequest {
+  title: string;
+  description?: string;
+  countable: boolean;
+}
+
 export const authApi = {
   me: () => apiFetch<CurrentUserResponse>('/auth/me'),
 };
@@ -98,6 +104,12 @@ export const roadmapApi = {
   addTopic: (roadmapId: string, request: AddTopicRequest) =>
     apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics`, {
       method: 'POST',
+      body: JSON.stringify(request),
+    }),
+
+  editTopic: (roadmapId: string, topicId: string, request: EditTopicRequest) =>
+    apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics/${topicId}`, {
+      method: 'PUT',
       body: JSON.stringify(request),
     }),
 };

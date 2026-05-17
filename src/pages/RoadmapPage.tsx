@@ -46,7 +46,7 @@ import {
 } from "lucide-react";
 import { mockTrainees, TopicStatus, RoadmapTopic, ResourceType, Resource } from "../data/mockData";
 import { cn } from "../lib/utils";
-import { roadmapApi, ApiTopicNode } from "../lib/apiClient";
+import { roadmapApi, ApiTopicNode, EditTopicRequest } from "../lib/apiClient";
 
 const ROADMAP_ID = '00000000-0000-0000-0000-000000000100';
 
@@ -952,6 +952,44 @@ export default function RoadmapPage() {
     }
   };
 
+  const handleEditTopic = async (formData: FormData) => {
+    if (isTrainee) {
+      showToast("Proposal submitted for manager approval", "info");
+      setActiveModal(null);
+      return;
+    }
+
+    if (!modalContext || modalContext.id === 'root') return;
+
+    const title = ((formData.get('title') as string) ?? '').trim();
+    if (!title) {
+      setModalError('Title must not be blank');
+      return;
+    }
+    const description = ((formData.get('description') as string) ?? '').trim() || undefined;
+    const countable = formData.get('isCountable') === 'on';
+
+    setIsModalSubmitting(true);
+    setModalError(null);
+    try {
+      const updated = await roadmapApi.editTopic(ROADMAP_ID, modalContext.id, { title, description, countable });
+      const newTopics = updated.topics.map(mapApiTopic);
+      setRoadmapTitle(updated.title);
+      setRoadmapData(newTopics);
+      // Keep the detail panel current if the edited topic is selected
+      if (selectedTopic?.id === modalContext.id) {
+        const refreshed = flattenTopics(newTopics).find(t => t.id === modalContext.id);
+        if (refreshed) setSelectedTopic(refreshed);
+      }
+      setActiveModal(null);
+      showToast('Topic updated successfully');
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to update topic');
+    } finally {
+      setIsModalSubmitting(false);
+    }
+  };
+
   if (apiLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background-app">
@@ -1367,14 +1405,7 @@ export default function RoadmapPage() {
                     if (activeModal === 'add') {
                       handleAddTopic(formData);
                     } else if (activeModal === 'edit') {
-                      handleAction('edit', {
-                        id: modalContext?.id,
-                        updates: {
-                          title: formData.get('title'),
-                          description: formData.get('description'),
-                          isCountable: formData.get('isCountable') === 'on'
-                        }
-                      });
+                      handleEditTopic(formData);
                     }
                   }} className="space-y-5">
                     <div className="space-y-4">
@@ -1437,11 +1468,11 @@ export default function RoadmapPage() {
                       </button>
                       <button
                         type="submit"
-                        disabled={activeModal === 'add' && isModalSubmitting}
+                        disabled={isModalSubmitting}
                         className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all disabled:opacity-60 disabled:pointer-events-none"
                       >
-                        {activeModal === 'add' && isModalSubmitting
-                          ? 'COMMITTING...'
+                        {isModalSubmitting
+                          ? (activeModal === 'edit' ? 'UPDATING...' : 'COMMITTING...')
                           : activeModal === "edit"
                             ? (role === "manager" ? "SAVE CHANGES" : "PROPOSE CHANGES")
                             : (role === "manager" ? "COMMIT TO PATH" : "SUBMIT PROPOSAL")}
