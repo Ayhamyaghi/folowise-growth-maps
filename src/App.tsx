@@ -25,11 +25,17 @@ import AccountsPage from "./pages/AccountsPage";
 // Components
 import Sidebar from "./components/Sidebar";
 
-// Auth Context (Pseudo-auth for prototype)
+// API
+import { getToken, clearToken } from "./lib/apiClient";
+
+// Auth Context
 type Role = "manager" | "trainee" | null;
 interface AuthContextType {
   role: Role;
-  login: (role: Role) => void;
+  userId: string | null;
+  email: string | null;
+  isLoading: boolean;
+  login: (token: string, userId: string, email: string, role: Role) => void;
   logout: () => void;
 }
 
@@ -44,7 +50,7 @@ export const useAuth = () => {
 // Layout Wrapper
 const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
-  
+
   return (
     <div className="flex h-screen bg-background-app text-text-primary overflow-hidden font-sans">
       <Sidebar />
@@ -67,18 +73,59 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { role } = useAuth();
+  const { role, isLoading } = useAuth();
+  if (isLoading) return null;
   if (!role) return <Navigate to="/login" replace />;
   return <DashboardLayout>{children}</DashboardLayout>;
 };
 
 export default function App() {
   const [role, setRole] = useState<Role>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (newRole: Role) => setRole(newRole);
-  const logout = () => setRole(null);
+  // On mount, validate existing token via /me
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+    fetch('/api/v1/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Session expired');
+        return res.json();
+      })
+      .then((data: { userId: string; email: string; role: string }) => {
+        const mappedRole: Role = data.role === 'MANAGER' ? 'manager' : 'trainee';
+        setRole(mappedRole);
+        setUserId(data.userId);
+        setEmail(data.email);
+      })
+      .catch(() => {
+        clearToken();
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
 
-  // Handle default font loading (Recipe 1 & 11 vibe)
+  const login = (token: string, newUserId: string, newEmail: string, newRole: Role) => {
+    localStorage.setItem('auth_token', token);
+    setRole(newRole);
+    setUserId(newUserId);
+    setEmail(newEmail);
+  };
+
+  const logout = () => {
+    clearToken();
+    setRole(null);
+    setUserId(null);
+    setEmail(null);
+  };
+
+  // Handle default font loading
   useEffect(() => {
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap";
@@ -87,11 +134,11 @@ export default function App() {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ role, login, logout }}>
+    <AuthContext.Provider value={{ role, userId, email, isLoading, login, logout }}>
       <Router>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          
+
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/trainees" element={<ProtectedRoute><TraineesPage /></ProtectedRoute>} />
           <Route path="/trainee/:id" element={<ProtectedRoute><TraineeProfilePage /></ProtectedRoute>} />
@@ -99,11 +146,10 @@ export default function App() {
           <Route path="/requests" element={<ProtectedRoute><RequestsPage /></ProtectedRoute>} />
           <Route path="/activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
           <Route path="/accounts" element={<ProtectedRoute><AccountsPage /></ProtectedRoute>} />
-          
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
   );
 }
-

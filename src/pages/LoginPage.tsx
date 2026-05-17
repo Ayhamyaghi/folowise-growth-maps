@@ -3,19 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { 
-  LogIn, 
-  User, 
-  ShieldCheck, 
-  Github, 
-  Chrome, 
-  ArrowRight, 
-  Layout, 
-  Zap, 
+import { useState, useEffect, FormEvent } from "react";
+import { motion } from "motion/react";
+import {
+  ShieldCheck,
+  Github,
+  Chrome,
+  ArrowRight,
+  Layout,
+  Zap,
   BarChart3,
-  ChevronRight,
   Shield,
   Layers,
   Map as MapIcon
@@ -28,6 +25,10 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,9 +38,29 @@ export default function LoginPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleLogin = (role: "manager" | "trainee") => {
-    login(role);
-    navigate("/");
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || 'Invalid credentials');
+      }
+      const data = await res.json();
+      const role: "manager" | "trainee" = data.role === 'MANAGER' ? 'manager' : 'trainee';
+      login(data.accessToken, data.userId, data.email, role);
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const scrollToAuth = () => {
@@ -76,7 +97,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <button 
+          <button
             onClick={scrollToAuth}
             className="px-8 py-3 bg-text-primary text-white rounded-full text-[11px] font-black uppercase tracking-[0.2em] hover:brightness-125 active:scale-95 transition-all shadow-2xl shadow-black/10"
           >
@@ -104,7 +125,7 @@ export default function LoginPage() {
               Folowise Roadmap Manager helps managers create, track, and approve individualized learning paths for every trainee — all in one visual workspace.
             </p>
             <div className="flex flex-wrap gap-6">
-              <button 
+              <button
                 onClick={scrollToAuth}
                 className="px-10 py-5 bg-brand text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-brand/40 flex items-center gap-4 group"
               >
@@ -122,7 +143,7 @@ export default function LoginPage() {
             transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="relative"
           >
-             {/* Decorative UI Element 1 */}
+             {/* Decorative UI Element */}
              <div className="relative aspect-square max-w-lg mx-auto">
                 <div className="absolute inset-0 bg-gradient-to-br from-brand/10 to-blue-500/10 rounded-[4rem] blur-3xl opacity-30" />
                 <div className="absolute inset-0 bg-white border border-border-subtle rounded-[4rem] shadow-2xl shadow-black/[0.05] overflow-hidden p-12 flex flex-col justify-between group ring-8 ring-slate-50/50">
@@ -158,7 +179,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Floating Badges */}
-                <motion.div 
+                <motion.div
                   animate={{ y: [0, -15, 0] }}
                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                   className="absolute -top-8 -right-8 p-6 bg-white border border-border-subtle rounded-3xl shadow-2xl shadow-black/[0.1] flex items-center gap-4 z-20 ring-4 ring-slate-50/50"
@@ -172,7 +193,7 @@ export default function LoginPage() {
                    </div>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                    animate={{ y: [0, 15, 0] }}
                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                    className="absolute -bottom-8 -left-8 p-6 bg-brand text-white rounded-3xl shadow-2xl shadow-brand/40 flex items-center gap-4 z-20"
@@ -195,7 +216,7 @@ export default function LoginPage() {
             {[
               {
                 title: "Visual Matrix",
-                desc: "Track each trainee’s strategy plan as a structured, interactive visual roadmap matrix.",
+                desc: "Track each trainee's strategy plan as a structured, interactive visual roadmap matrix.",
                 icon: MapIcon,
                 color: "text-brand"
               },
@@ -244,47 +265,58 @@ export default function LoginPage() {
              className="text-center mb-24"
           >
             <h2 className="text-[11px] font-black text-brand uppercase tracking-[0.6em] mb-6">Strategic Authorization</h2>
-            <h3 className="text-5xl md:text-6xl font-display font-black tracking-tighter text-text-primary uppercase leading-none">Choose your workspace</h3>
-            <p className="text-text-secondary mt-8 font-medium text-lg max-w-2xl mx-auto opacity-60">Select your institutional authority role to continue to the Folowise Roadmap Strategic Matrix.</p>
+            <h3 className="text-5xl md:text-6xl font-display font-black tracking-tighter text-text-primary uppercase leading-none">Sign in to workspace</h3>
+            <p className="text-text-secondary mt-8 font-medium text-lg max-w-2xl mx-auto opacity-60">Enter your credentials to access the Folowise Roadmap Strategic Matrix.</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-24">
-            <motion.button 
-              whileHover={{ y: -10 }}
-              onClick={() => handleLogin("manager")}
-              className="group relative p-12 rounded-[4rem] bg-white border border-border-subtle text-left hover:border-brand/40 transition-all shadow-2xl shadow-black/[0.03]"
-            >
-               <div className="absolute inset-0 bg-brand/[0.01] opacity-0 group-hover:opacity-100 transition-opacity rounded-[4rem]" />
-              <div className="w-20 h-20 bg-slate-50 rounded-[2.2rem] flex items-center justify-center mb-10 group-hover:bg-brand/5 group-hover:text-brand transition-all border border-slate-100 group-hover:border-brand/20 shadow-inner relative z-10">
-                <ShieldCheck size={40} strokeWidth={2.5} />
+          <motion.form
+            onSubmit={handleSubmit}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="mb-24 max-w-lg mx-auto"
+          >
+            <div className="bg-white border border-border-subtle rounded-[3rem] shadow-2xl shadow-black/[0.03] p-12 space-y-8">
+              {error && (
+                <div className="px-5 py-3 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-[11px] font-black uppercase tracking-[0.15em]">
+                  {error}
+                </div>
+              )}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-text-tertiary opacity-70">Email</label>
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  required
+                  placeholder="you@folowise.dev"
+                  className="w-full px-5 py-4 bg-surface-soft border border-border-standard rounded-2xl text-sm font-medium text-text-primary placeholder:text-text-tertiary outline-none focus:border-brand/40 transition-all"
+                />
               </div>
-              <h4 className="text-2xl font-display font-black tracking-tight mb-4 uppercase text-text-primary relative z-10">Strategy Manager</h4>
-              <p className="text-base text-text-secondary font-medium leading-relaxed mb-10 opacity-70 relative z-10">
-                Manage trainee units, design strategic roadmaps, review structural approvals, and track high-level activity.
-              </p>
-              <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-brand group-hover:gap-5 transition-all relative z-10">
-                Enter Strategic Workspace <ChevronRight size={18} strokeWidth={3} />
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-text-tertiary opacity-70">Password</label>
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full px-5 py-4 bg-surface-soft border border-border-standard rounded-2xl text-sm font-medium text-text-primary placeholder:text-text-tertiary outline-none focus:border-brand/40 transition-all"
+                />
               </div>
-            </motion.button>
-
-            <motion.button 
-              whileHover={{ y: -10 }}
-              onClick={() => handleLogin("trainee")}
-              className="group relative p-12 rounded-[4rem] bg-white border border-border-subtle text-left hover:border-brand/40 transition-all shadow-2xl shadow-black/[0.03]"
-            >
-               <div className="absolute inset-0 bg-brand/[0.01] opacity-0 group-hover:opacity-100 transition-opacity rounded-[4rem]" />
-              <div className="w-20 h-20 bg-slate-50 rounded-[2.2rem] flex items-center justify-center mb-10 group-hover:bg-brand/5 group-hover:text-brand transition-all border border-slate-100 group-hover:border-brand/20 shadow-inner relative z-10">
-                <User size={40} strokeWidth={2.5} />
-              </div>
-              <h4 className="text-2xl font-display font-black tracking-tight mb-4 uppercase text-text-primary relative z-10">Unit Trainee</h4>
-              <p className="text-base text-text-secondary font-medium leading-relaxed mb-10 opacity-70 relative z-10">
-                View your personal strategic matrix, mark progress, and submit structural change requests to your manager.
-              </p>
-              <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-brand group-hover:gap-5 transition-all relative z-10">
-                Enter Unit Workspace <ChevronRight size={18} strokeWidth={3} />
-              </div>
-            </motion.button>
-          </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full px-10 py-5 bg-brand text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-brand/40 flex items-center justify-center gap-4 group disabled:opacity-60 disabled:pointer-events-none"
+              >
+                {isSubmitting
+                  ? "Authenticating..."
+                  : <><span>Sign In To Workspace</span><ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" strokeWidth={3} /></>
+                }
+              </button>
+            </div>
+          </motion.form>
 
           <div className="relative text-center">
              <div className="absolute inset-0 flex items-center">
@@ -323,4 +355,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

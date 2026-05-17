@@ -44,8 +44,32 @@ import {
   ChevronDown,
   ArrowRight
 } from "lucide-react";
-import { mockRoadmap, mockTrainees, TopicStatus, RoadmapTopic, ResourceType, Resource } from "../data/mockData";
+import { mockTrainees, TopicStatus, RoadmapTopic, ResourceType, Resource } from "../data/mockData";
 import { cn } from "../lib/utils";
+import { roadmapApi, ApiTopicNode } from "../lib/apiClient";
+
+const ROADMAP_ID = '00000000-0000-0000-0000-000000000100';
+
+const TOPIC_STATUS_MAP: Record<string, TopicStatus> = {
+  NOT_STARTED: TopicStatus.NotStarted,
+  IN_PROGRESS: TopicStatus.InProgress,
+  COMPLETED: TopicStatus.Completed,
+  PAUSED: TopicStatus.Paused,
+  SKIPPED: TopicStatus.Skipped,
+  NEEDS_REVIEW: TopicStatus.NeedsReview,
+};
+
+function mapApiTopic(node: ApiTopicNode): RoadmapTopic {
+  return {
+    id: node.id,
+    title: node.title,
+    description: node.description ?? undefined,
+    status: TOPIC_STATUS_MAP[node.status] ?? TopicStatus.NotStarted,
+    isCountable: node.countable,
+    parentId: node.parentId ?? undefined,
+    children: node.children.length > 0 ? node.children.map(mapApiTopic) : undefined,
+  };
+}
 
 type ViewMode = "tree" | "list";
 
@@ -645,7 +669,10 @@ export default function RoadmapPage() {
   const activeTraineeId = isTrainee ? "t1" : (id === "me" || !id ? "t1" : id);
   const trainee = mockTrainees.find(t => t.id === activeTraineeId) || mockTrainees[0];
 
-  const [roadmapData, setRoadmapData] = useState<RoadmapTopic[]>(mockRoadmap);
+  const [roadmapData, setRoadmapData] = useState<RoadmapTopic[]>([]);
+  const [apiLoading, setApiLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [roadmapTitle, setRoadmapTitle] = useState("Roadmap");
   const [viewMode, setViewMode] = useState<ViewMode>("tree");
   const [selectedTopic, setSelectedTopic] = useState<RoadmapTopic | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -664,10 +691,10 @@ export default function RoadmapPage() {
   // Visual Layout: Virtual Root for easy traversal
   const virtualRoot: RoadmapTopic = {
     id: "root",
-    title: "AI Engineering Roadmap",
+    title: roadmapTitle,
     status: TopicStatus.Completed,
     isCountable: false,
-    description: "The global strategic path for AI Engineering excellence.",
+    description: "The global strategic path for this roadmap.",
     children: roadmapData
   };
 
@@ -860,6 +887,19 @@ export default function RoadmapPage() {
     }
   }, []);
 
+  useEffect(() => {
+    roadmapApi.getTree(ROADMAP_ID)
+      .then((data) => {
+        setRoadmapTitle(data.title);
+        setRoadmapData(data.topics.map(mapApiTopic));
+        setApiLoading(false);
+      })
+      .catch((err: Error) => {
+        setApiError(err.message || 'Failed to load roadmap');
+        setApiLoading(false);
+      });
+  }, []);
+
   const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
   const handleReset = () => {
@@ -875,6 +915,22 @@ export default function RoadmapPage() {
     setModalContext(topic || null);
     setActiveModal(type);
   };
+
+  if (apiLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background-app">
+        <div className="text-text-secondary text-sm font-medium uppercase tracking-widest">Loading roadmap...</div>
+      </div>
+    );
+  }
+
+  if (apiError) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background-app">
+        <div className="text-red-500 text-sm font-medium uppercase tracking-widest">Error: {apiError}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background-app overflow-hidden transition-colors duration-500">
