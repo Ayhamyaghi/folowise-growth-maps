@@ -47,6 +47,7 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.POST, "/api/v1/roadmaps/*/topics").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.PUT, "/api/v1/roadmaps/*/topics/*").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.DELETE, "/api/v1/roadmaps/*/topics/*").hasRole("MANAGER")
+                    .requestMatchers(HttpMethod.PATCH, "/api/v1/roadmaps/*/topics/*/move").hasRole("MANAGER")
                     .anyRequest().authenticated()
             }
             .exceptionHandling {

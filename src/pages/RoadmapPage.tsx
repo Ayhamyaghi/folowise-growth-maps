@@ -46,7 +46,7 @@ import {
 } from "lucide-react";
 import { mockTrainees, TopicStatus, RoadmapTopic, ResourceType, Resource } from "../data/mockData";
 import { cn } from "../lib/utils";
-import { roadmapApi, ApiTopicNode, EditTopicRequest } from "../lib/apiClient";
+import { roadmapApi, ApiTopicNode } from "../lib/apiClient";
 
 const ROADMAP_ID = '00000000-0000-0000-0000-000000000100';
 
@@ -57,6 +57,15 @@ const TOPIC_STATUS_MAP: Record<string, TopicStatus> = {
   PAUSED: TopicStatus.Paused,
   SKIPPED: TopicStatus.Skipped,
   NEEDS_REVIEW: TopicStatus.NeedsReview,
+};
+
+const TOPIC_STATUS_BACKEND: Record<TopicStatus, string> = {
+  [TopicStatus.NotStarted]: 'NOT_STARTED',
+  [TopicStatus.InProgress]: 'IN_PROGRESS',
+  [TopicStatus.Completed]: 'COMPLETED',
+  [TopicStatus.Paused]: 'PAUSED',
+  [TopicStatus.Skipped]: 'SKIPPED',
+  [TopicStatus.NeedsReview]: 'NEEDS_REVIEW',
 };
 
 function mapApiTopic(node: ApiTopicNode): RoadmapTopic {
@@ -982,6 +991,55 @@ export default function RoadmapPage() {
     }
   };
 
+  const handleMoveTopic = async (rawParentId: string) => {
+    if (isTrainee) {
+      showToast("Proposal submitted for manager approval", "info");
+      setActiveModal(null);
+      return;
+    }
+
+    if (!modalContext || modalContext.id === 'root') return;
+
+    const newParentId = (!rawParentId || rawParentId === 'root') ? null : rawParentId;
+
+    setIsModalSubmitting(true);
+    setModalError(null);
+    try {
+      const updated = await roadmapApi.moveTopic(ROADMAP_ID, modalContext.id, { newParentId });
+      const newTopics = updated.topics.map(mapApiTopic);
+      setRoadmapTitle(updated.title);
+      setRoadmapData(newTopics);
+      if (selectedTopic) {
+        const refreshed = flattenTopics(newTopics).find(t => t.id === selectedTopic.id);
+        if (refreshed) setSelectedTopic(refreshed);
+        else setSelectedTopic(null);
+      }
+      setActiveModal(null);
+      showToast('Topic moved successfully');
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to move topic');
+    } finally {
+      setIsModalSubmitting(false);
+    }
+  };
+
+  const handleStatusChange = async (topic: RoadmapTopic, newStatus: TopicStatus) => {
+    try {
+      const updated = await roadmapApi.updateTopicStatus(ROADMAP_ID, topic.id, {
+        status: TOPIC_STATUS_BACKEND[newStatus],
+      });
+      const newTopics = updated.topics.map(mapApiTopic);
+      setRoadmapTitle(updated.title);
+      setRoadmapData(newTopics);
+      if (selectedTopic) {
+        const refreshed = flattenTopics(newTopics).find(t => t.id === selectedTopic.id);
+        if (refreshed) setSelectedTopic(refreshed);
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update status', 'error');
+    }
+  };
+
   const handleEditTopic = async (formData: FormData) => {
     if (isTrainee) {
       showToast("Proposal submitted for manager approval", "info");
@@ -1234,7 +1292,7 @@ export default function RoadmapPage() {
                onMove={(t) => openActionModal("move", t)}
                onCopy={(t) => openActionModal("copy", t)}
                onAddResource={(t) => openActionModal("resource", t)}
-               onStatusChange={(t, s) => handleAction('status', { id: t.id, status: s })}
+               onStatusChange={(t, s) => { void handleStatusChange(t, s); }}
                onDeleteResource={(tid, rid) => handleAction('resource-delete', { id: tid, resourceId: rid })}
              />
           </>
@@ -1341,7 +1399,7 @@ export default function RoadmapPage() {
                   <form onSubmit={(e) => {
                     e.preventDefault();
                     const formData = new FormData(e.currentTarget);
-                    handleAction('move', { id: modalContext?.id, newParentId: formData.get('parentId') });
+                    void handleMoveTopic(formData.get('parentId') as string);
                   }} className="space-y-5">
                     <p className="text-[11px] font-medium text-text-secondary leading-relaxed">
                       Select a strategic destination for <span className="font-bold text-text-primary">"{modalContext?.title}"</span>.
@@ -1351,17 +1409,31 @@ export default function RoadmapPage() {
                         <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5 opacity-60">Target Parent Module</label>
                         <div className="relative group">
                            <select name="parentId" defaultValue={modalContext?.parentId || 'root'} className="w-full appearance-none px-4 py-2 bg-white border border-border-standard rounded-lg text-[11px] font-black text-text-primary outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all pr-10 shadow-sm cursor-pointer">
-                              {getFilteredNodes(modalContext?.id).map(t => (
-                                <option key={t.id} value={t.id}>{t.title}</option>
-                              ))}
+                              <option value="root">Top Level (No Parent)</option>
+                              {flattenTopics(roadmapData)
+                                .filter(t => {
+                                  if (!modalContext) return true;
+                                  const descendants = flattenTopics(
+                                    [allTopics.find(a => a.id === modalContext.id)!]
+                                  ).map(d => d.id);
+                                  return t.id !== modalContext.id && !descendants.includes(t.id);
+                                })
+                                .map(t => (
+                                  <option key={t.id} value={t.id}>{t.title}</option>
+                                ))}
                            </select>
                            <ChevronDown size={14} strokeWidth={3} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-tertiary pointer-events-none group-focus-within:text-brand" />
                         </div>
                       </div>
                     </div>
+                    {modalError && (
+                      <div className="px-4 py-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-[10px] font-black uppercase tracking-[0.15em]">
+                        {modalError}
+                      </div>
+                    )}
                     <div className="flex gap-2 pt-1">
-                       <button type="button" onClick={() => setActiveModal(null)} className="flex-1 py-2.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm active:scale-95 transition-all hover:bg-slate-50">CANCEL</button>
-                       <button type="submit" className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all">MIGRATE NODE</button>
+                       <button type="button" onClick={() => setActiveModal(null)} disabled={isModalSubmitting} className="flex-1 py-2.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm active:scale-95 transition-all hover:bg-slate-50 disabled:opacity-60 disabled:pointer-events-none">CANCEL</button>
+                       <button type="submit" disabled={isModalSubmitting} className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all disabled:opacity-60 disabled:pointer-events-none">{isModalSubmitting ? 'MOVING...' : 'MIGRATE NODE'}</button>
                     </div>
                   </form>
                 ) : activeModal === "resource" ? (

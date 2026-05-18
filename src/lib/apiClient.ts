@@ -93,6 +93,14 @@ export interface EditTopicRequest {
   countable: boolean;
 }
 
+export interface MoveTopicRequest {
+  newParentId: string | null;
+}
+
+export interface UpdateTopicStatusRequest {
+  status: string;
+}
+
 export const authApi = {
   me: () => apiFetch<CurrentUserResponse>('/auth/me'),
 };
@@ -116,5 +124,17 @@ export const roadmapApi = {
   deleteTopic: (roadmapId: string, topicId: string) =>
     apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics/${topicId}`, {
       method: 'DELETE',
+    }),
+
+  moveTopic: (roadmapId: string, topicId: string, request: MoveTopicRequest) =>
+    apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics/${topicId}/move`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
+    }),
+
+  updateTopicStatus: (roadmapId: string, topicId: string, request: UpdateTopicStatusRequest) =>
+    apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics/${topicId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(request),
     }),
 };

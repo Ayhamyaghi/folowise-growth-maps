@@ -2,7 +2,9 @@ package com.folowise.roadmap.controller
 
 import com.folowise.roadmap.dto.roadmap.AddRoadmapTopicRequest
 import com.folowise.roadmap.dto.roadmap.EditRoadmapTopicRequest
+import com.folowise.roadmap.dto.roadmap.MoveRoadmapTopicRequest
 import com.folowise.roadmap.dto.roadmap.RoadmapTreeResponse
+import com.folowise.roadmap.dto.roadmap.UpdateRoadmapTopicStatusRequest
 import com.folowise.roadmap.service.RoadmapMutationService
 import com.folowise.roadmap.service.RoadmapQueryService
 import jakarta.validation.Valid
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -51,4 +54,20 @@ class RoadmapController(
         @PathVariable topicId: UUID
     ): ResponseEntity<RoadmapTreeResponse> =
         ResponseEntity.ok(roadmapMutationService.deleteTopic(roadmapId, topicId))
+
+    @PatchMapping("/{roadmapId}/topics/{topicId}/move")
+    fun moveTopic(
+        @PathVariable roadmapId: UUID,
+        @PathVariable topicId: UUID,
+        @RequestBody request: MoveRoadmapTopicRequest
+    ): ResponseEntity<RoadmapTreeResponse> =
+        ResponseEntity.ok(roadmapMutationService.moveTopic(roadmapId, topicId, request))
+
+    @PatchMapping("/{roadmapId}/topics/{topicId}/status")
+    fun updateTopicStatus(
+        @PathVariable roadmapId: UUID,
+        @PathVariable topicId: UUID,
+        @Valid @RequestBody request: UpdateRoadmapTopicStatusRequest
+    ): ResponseEntity<RoadmapTreeResponse> =
+        ResponseEntity.ok(roadmapMutationService.updateTopicStatus(roadmapId, topicId, request))
 }
