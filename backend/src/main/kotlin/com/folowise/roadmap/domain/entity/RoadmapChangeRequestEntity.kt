@@ -74,7 +74,15 @@ open class RoadmapChangeRequestEntity(
     @Column(name = "proposed_title", length = 255)
     open var proposedTitle: String? = null
 
-    // Proposed new parent for the topic (MOVE_TOPIC action only).
+    // Proposed description for the new topic (ADD_TOPIC action only).
+    @Column(name = "proposed_description", columnDefinition = "TEXT")
+    open var proposedDescription: String? = null
+
+    // Whether the proposed topic should count toward progress (ADD_TOPIC action only).
+    @Column(name = "proposed_countable", nullable = false)
+    open var proposedCountable: Boolean = true
+
+    // Proposed new parent for the topic (ADD_TOPIC or MOVE_TOPIC action).
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "proposed_parent_id", nullable = true)
     open var proposedParent: RoadmapTopicEntity? = null

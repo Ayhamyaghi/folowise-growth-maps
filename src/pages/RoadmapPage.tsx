@@ -46,7 +46,7 @@ import {
 } from "lucide-react";
 import { mockTrainees, TopicStatus, RoadmapTopic, ResourceType, Resource } from "../data/mockData";
 import { cn } from "../lib/utils";
-import { roadmapApi, ApiTopicNode } from "../lib/apiClient";
+import { roadmapApi, changeRequestApi, ApiTopicNode } from "../lib/apiClient";
 
 const ROADMAP_ID = '00000000-0000-0000-0000-000000000100';
 
@@ -930,12 +930,6 @@ export default function RoadmapPage() {
   };
 
   const handleAddTopic = async (formData: FormData) => {
-    if (isTrainee) {
-      showToast("Proposal submitted for manager approval", "info");
-      setActiveModal(null);
-      return;
-    }
-
     const title = ((formData.get('title') as string) ?? '').trim();
     if (!title) {
       setModalError('Title must not be blank');
@@ -949,11 +943,17 @@ export default function RoadmapPage() {
     setIsModalSubmitting(true);
     setModalError(null);
     try {
-      const updated = await roadmapApi.addTopic(ROADMAP_ID, { title, description, parentId, countable });
-      setRoadmapTitle(updated.title);
-      setRoadmapData(updated.topics.map(mapApiTopic));
-      setActiveModal(null);
-      showToast('Topic added successfully');
+      if (isTrainee) {
+        await changeRequestApi.submitAddTopic(ROADMAP_ID, { title, description, parentId, countable });
+        setActiveModal(null);
+        showToast('Proposal submitted for manager approval', 'info');
+      } else {
+        const updated = await roadmapApi.addTopic(ROADMAP_ID, { title, description, parentId, countable });
+        setRoadmapTitle(updated.title);
+        setRoadmapData(updated.topics.map(mapApiTopic));
+        setActiveModal(null);
+        showToast('Topic added successfully');
+      }
     } catch (err: any) {
       setModalError(err.message || 'Failed to add topic');
     } finally {
@@ -962,17 +962,17 @@ export default function RoadmapPage() {
   };
 
   const handleDeleteTopic = async () => {
-    if (isTrainee) {
-      showToast("Proposal submitted for manager approval", "info");
-      setActiveModal(null);
-      return;
-    }
-
     if (!modalContext || modalContext.id === 'root') return;
 
     setIsModalSubmitting(true);
     setModalError(null);
     try {
+      if (isTrainee) {
+        await changeRequestApi.submitDeleteTopic(ROADMAP_ID, { topicId: modalContext.id });
+        setActiveModal(null);
+        showToast('Request submitted for manager approval', 'info');
+        return;
+      }
       const updated = await roadmapApi.deleteTopic(ROADMAP_ID, modalContext.id);
       const newTopics = updated.topics.map(mapApiTopic);
       setRoadmapTitle(updated.title);
@@ -992,12 +992,6 @@ export default function RoadmapPage() {
   };
 
   const handleMoveTopic = async (rawParentId: string) => {
-    if (isTrainee) {
-      showToast("Proposal submitted for manager approval", "info");
-      setActiveModal(null);
-      return;
-    }
-
     if (!modalContext || modalContext.id === 'root') return;
 
     const newParentId = (!rawParentId || rawParentId === 'root') ? null : rawParentId;
@@ -1005,6 +999,15 @@ export default function RoadmapPage() {
     setIsModalSubmitting(true);
     setModalError(null);
     try {
+      if (isTrainee) {
+        await changeRequestApi.submitMoveTopic(ROADMAP_ID, {
+          topicId: modalContext.id,
+          newParentId,
+        });
+        setActiveModal(null);
+        showToast('Request submitted for manager approval', 'info');
+        return;
+      }
       const updated = await roadmapApi.moveTopic(ROADMAP_ID, modalContext.id, { newParentId });
       const newTopics = updated.topics.map(mapApiTopic);
       setRoadmapTitle(updated.title);
@@ -1041,12 +1044,6 @@ export default function RoadmapPage() {
   };
 
   const handleEditTopic = async (formData: FormData) => {
-    if (isTrainee) {
-      showToast("Proposal submitted for manager approval", "info");
-      setActiveModal(null);
-      return;
-    }
-
     if (!modalContext || modalContext.id === 'root') return;
 
     const title = ((formData.get('title') as string) ?? '').trim();
@@ -1060,6 +1057,17 @@ export default function RoadmapPage() {
     setIsModalSubmitting(true);
     setModalError(null);
     try {
+      if (isTrainee) {
+        await changeRequestApi.submitEditTopic(ROADMAP_ID, {
+          topicId: modalContext.id,
+          title,
+          description,
+          countable,
+        });
+        setActiveModal(null);
+        showToast('Request submitted for manager approval', 'info');
+        return;
+      }
       const updated = await roadmapApi.editTopic(ROADMAP_ID, modalContext.id, { title, description, countable });
       const newTopics = updated.topics.map(mapApiTopic);
       setRoadmapTitle(updated.title);

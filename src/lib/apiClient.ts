@@ -105,6 +105,94 @@ export const authApi = {
   me: () => apiFetch<CurrentUserResponse>('/auth/me'),
 };
 
+export interface ChangeRequestResponse {
+  id: string;
+  roadmapId: string;
+  roadmapTitle: string;
+  action: string;
+  status: string;
+  description: string;
+  requestedByEmail: string;
+  requestedByDisplayName: string;
+  proposedTitle: string | null;
+  proposedDescription: string | null;
+  proposedParentId: string | null;
+  proposedParentTitle: string | null;
+  proposedCountable: boolean;
+  managerNote: string | null;
+  createdAt: string;
+}
+
+export interface SubmitAddTopicRequest {
+  title: string;
+  description?: string;
+  parentId?: string | null;
+  countable: boolean;
+}
+
+export interface SubmitEditTopicRequest {
+  topicId: string;
+  title: string;
+  description?: string;
+  countable: boolean;
+}
+
+export interface SubmitDeleteTopicRequest {
+  topicId: string;
+}
+
+export interface SubmitMoveTopicRequest {
+  topicId: string;
+  newParentId: string | null;
+}
+
+export interface RejectChangeRequestRequest {
+  managerNote?: string;
+}
+
+export const changeRequestApi = {
+  submitAddTopic: (roadmapId: string, request: SubmitAddTopicRequest) =>
+    apiFetch<ChangeRequestResponse>(`/roadmaps/${roadmapId}/change-requests/add-topic`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
+
+  submitEditTopic: (roadmapId: string, request: SubmitEditTopicRequest) =>
+    apiFetch<ChangeRequestResponse>(`/roadmaps/${roadmapId}/change-requests/edit-topic`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
+
+  submitDeleteTopic: (roadmapId: string, request: SubmitDeleteTopicRequest) =>
+    apiFetch<ChangeRequestResponse>(`/roadmaps/${roadmapId}/change-requests/delete-topic`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
+
+  submitMoveTopic: (roadmapId: string, request: SubmitMoveTopicRequest) =>
+    apiFetch<ChangeRequestResponse>(`/roadmaps/${roadmapId}/change-requests/move-topic`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
+
+  getPending: () =>
+    apiFetch<ChangeRequestResponse[]>('/change-requests/pending'),
+
+  getMy: () =>
+    apiFetch<ChangeRequestResponse[]>('/change-requests/my'),
+
+  approve: (requestId: string) =>
+    apiFetch<ChangeRequestResponse>(`/change-requests/${requestId}/approve`, {
+      method: 'POST',
+    }),
+
+  reject: (requestId: string, request: RejectChangeRequestRequest) =>
+    apiFetch<ChangeRequestResponse>(`/change-requests/${requestId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
+};
+
 export const roadmapApi = {
   getTree: (roadmapId: string) =>
     apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/tree`),
