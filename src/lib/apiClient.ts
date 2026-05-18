@@ -112,4 +112,9 @@ export const roadmapApi = {
       method: 'PUT',
       body: JSON.stringify(request),
     }),
+
+  deleteTopic: (roadmapId: string, topicId: string) =>
+    apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics/${topicId}`, {
+      method: 'DELETE',
+    }),
 };

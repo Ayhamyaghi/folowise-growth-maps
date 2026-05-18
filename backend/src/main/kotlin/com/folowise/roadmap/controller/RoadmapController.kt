@@ -8,6 +8,7 @@ import com.folowise.roadmap.service.RoadmapQueryService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -43,4 +44,11 @@ class RoadmapController(
         @Valid @RequestBody request: EditRoadmapTopicRequest
     ): ResponseEntity<RoadmapTreeResponse> =
         ResponseEntity.ok(roadmapMutationService.editTopic(roadmapId, topicId, request))
+
+    @DeleteMapping("/{roadmapId}/topics/{topicId}")
+    fun deleteTopic(
+        @PathVariable roadmapId: UUID,
+        @PathVariable topicId: UUID
+    ): ResponseEntity<RoadmapTreeResponse> =
+        ResponseEntity.ok(roadmapMutationService.deleteTopic(roadmapId, topicId))
 }

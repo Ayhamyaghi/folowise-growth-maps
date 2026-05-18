@@ -952,6 +952,36 @@ export default function RoadmapPage() {
     }
   };
 
+  const handleDeleteTopic = async () => {
+    if (isTrainee) {
+      showToast("Proposal submitted for manager approval", "info");
+      setActiveModal(null);
+      return;
+    }
+
+    if (!modalContext || modalContext.id === 'root') return;
+
+    setIsModalSubmitting(true);
+    setModalError(null);
+    try {
+      const updated = await roadmapApi.deleteTopic(ROADMAP_ID, modalContext.id);
+      const newTopics = updated.topics.map(mapApiTopic);
+      setRoadmapTitle(updated.title);
+      setRoadmapData(newTopics);
+      // Clear selected topic if it was deleted or was a descendant of the deleted topic
+      if (selectedTopic) {
+        const stillExists = flattenTopics(newTopics).some(t => t.id === selectedTopic.id);
+        if (!stillExists) setSelectedTopic(null);
+      }
+      setActiveModal(null);
+      showToast('Topic deleted successfully');
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to delete topic');
+    } finally {
+      setIsModalSubmitting(false);
+    }
+  };
+
   const handleEditTopic = async (formData: FormData) => {
     if (isTrainee) {
       showToast("Proposal submitted for manager approval", "info");
@@ -1282,21 +1312,28 @@ export default function RoadmapPage() {
                         Are you sure you want to remove <span className="font-bold underline">{modalContext?.title}</span>?
                       </p>
                       <p className="text-[9px] font-black text-rose-700/60 uppercase tracking-widest mt-2">
-                        DANGER: Erases node and {modalContext?.children?.length || 0} sub-modules permanently.
+                        DANGER: Deleting this topic will also delete all nested subtopics under it.
                       </p>
                     </div>
+                    {modalError && (
+                      <div className="px-4 py-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-[10px] font-black uppercase tracking-[0.15em]">
+                        {modalError}
+                      </div>
+                    )}
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => setActiveModal(null)}
-                        className="flex-1 py-1.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+                        disabled={isModalSubmitting}
+                        className="flex-1 py-1.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard hover:bg-slate-50 transition-all active:scale-95 shadow-sm disabled:opacity-60 disabled:pointer-events-none"
                       >
                         CLOSE
                       </button>
-                      <button 
-                        onClick={() => handleAction('delete', { id: modalContext?.id })}
-                        className="flex-1 py-2.5 bg-rose-500 text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all"
+                      <button
+                        onClick={handleDeleteTopic}
+                        disabled={isModalSubmitting}
+                        className="flex-1 py-2.5 bg-rose-500 text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all disabled:opacity-60 disabled:pointer-events-none"
                       >
-                        EXECUTE DELETE
+                        {isModalSubmitting ? 'DELETING...' : 'EXECUTE DELETE'}
                       </button>
                     </div>
                   </div>

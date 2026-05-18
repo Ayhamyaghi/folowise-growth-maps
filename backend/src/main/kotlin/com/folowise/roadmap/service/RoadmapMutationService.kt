@@ -70,6 +70,32 @@ class RoadmapMutationService(
     }
 
     /**
+     * Deletes an existing topic and returns the refreshed [RoadmapTreeResponse].
+     *
+     * Rules:
+     *  - Roadmap must exist.
+     *  - Topic must exist and belong to the same roadmap.
+     *  - All descendant topics are removed by the database ON DELETE CASCADE constraint.
+     *  - The full refreshed tree is returned so the caller can update the UI in one round-trip.
+     */
+    @Transactional
+    fun deleteTopic(roadmapId: UUID, topicId: UUID): RoadmapTreeResponse {
+        roadmapRepository.findById(roadmapId)
+            .orElseThrow { NoSuchElementException("Roadmap not found: $roadmapId") }
+
+        val topic = roadmapTopicRepository.findById(topicId)
+            .orElseThrow { NoSuchElementException("Topic not found: $topicId") }
+
+        require(roadmapTopicRepository.existsByIdAndRoadmapId(topicId, roadmapId)) {
+            "Topic does not belong to this roadmap"
+        }
+
+        roadmapTopicRepository.delete(topic)
+
+        return roadmapQueryService.getRoadmapTree(roadmapId)
+    }
+
+    /**
      * Updates the mutable fields of an existing topic and returns the refreshed [RoadmapTreeResponse].
      *
      * Rules:
