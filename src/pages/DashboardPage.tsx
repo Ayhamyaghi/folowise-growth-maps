@@ -3,32 +3,39 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { 
-  Users, 
-  TrendingUp, 
-  Clock, 
-  CheckCircle2, 
-  ArrowUpRight, 
+import {
+  Users,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  ArrowUpRight,
   MoreHorizontal,
   ChevronRight,
-  Search
+  Search,
+  AlertCircle
 } from "lucide-react";
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
   Cell
 } from "recharts";
-import { mockTrainees, mockActivity, mockChangeRequests } from "../data/mockData";
+import {
+  dashboardApi,
+  ManagerDashboardResponse,
+  TraineeDashboardResponse,
+} from "../lib/apiClient";
 import { Link } from "react-router-dom";
 import { cn } from "../lib/utils";
+import { useAuth } from "../App";
 
 const chartData = [
   { name: "Mon", progress: 40 },
@@ -47,23 +54,76 @@ const specData = [
   { name: "Marketing", count: 2, color: "#f59e0b" },
 ];
 
-import { useAuth } from "../App";
+function actionLabel(action: string): string {
+  switch (action) {
+    case 'ADD_TOPIC': return 'Add';
+    case 'EDIT_TOPIC': return 'Edit';
+    case 'DELETE_TOPIC': return 'Delete';
+    case 'MOVE_TOPIC': return 'Move';
+    default: return action;
+  }
+}
+
+function statusLabel(status: string): string {
+  switch (status) {
+    case 'PENDING': return 'Review';
+    case 'APPROVED': return 'Approved';
+    case 'REJECTED': return 'Rejected';
+    default: return status;
+  }
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 export default function DashboardPage() {
   const { role } = useAuth();
-  
+
   if (role === "manager") {
     return <ManagerDashboard />;
   }
-  
+
   return <TraineeDashboard />;
 }
 
 function ManagerDashboard() {
-  const totalTrainees = 17;
-  const avgProgress = 58;
-  const pendingRequests = mockChangeRequests.length;
-  const topicsCompletedThisWeek = 24;
+  const [data, setData] = useState<ManagerDashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const result = await dashboardApi.getManager();
+        setData(result);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load dashboard');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex items-center gap-3 p-4 bg-bg-danger border border-border-subtle rounded-xl text-sm font-bold text-status-danger">
+        <AlertCircle size={16} /> {error ?? 'Failed to load dashboard'}
+      </div>
+    );
+  }
+
+  const traineesNeedingAttention = data.traineeProgressSummaries
+    .filter(t => t.attentionReason)
+    .slice(0, 5);
 
   return (
     <div className="space-y-5 pb-6">
@@ -82,12 +142,12 @@ function ManagerDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {[
-          { label: "Total Trainees", value: totalTrainees, icon: Users, color: "text-status-info", bg: "bg-bg-info", border: "border-border-subtle" },
-          { label: "Average Progress", value: `${avgProgress}%`, icon: TrendingUp, color: "text-brand", bg: "bg-bg-brand-soft", border: "border-border-subtle" },
-          { label: "Pending Requests", value: pendingRequests, icon: Clock, color: "text-status-pending", bg: "bg-bg-pending", border: "border-border-subtle" },
-          { label: "Topics Completed", value: topicsCompletedThisWeek, icon: CheckCircle2, color: "text-status-success", bg: "bg-bg-success", border: "border-border-subtle", suffix: "This Week" },
+          { label: "Total Trainees", value: data.totalTrainees, icon: Users, color: "text-status-info", bg: "bg-bg-info", border: "border-border-subtle" },
+          { label: "Average Progress", value: `${data.averageProgress}%`, icon: TrendingUp, color: "text-brand", bg: "bg-bg-brand-soft", border: "border-border-subtle" },
+          { label: "Pending Requests", value: data.pendingChangeRequests, icon: Clock, color: "text-status-pending", bg: "bg-bg-pending", border: "border-border-subtle" },
+          { label: "Topics Completed", value: data.completedTopicsThisWeek, icon: CheckCircle2, color: "text-status-success", bg: "bg-bg-success", border: "border-border-subtle", suffix: "This Week" },
         ].map((stat, i) => (
-          <motion.div 
+          <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -98,7 +158,7 @@ function ManagerDashboard() {
             )}
           >
             <div className={stat.bg + " absolute top-0 right-0 w-20 h-20 rounded-full -mr-6 -mt-6 transition-transform group-hover:scale-110 duration-700 blur-2xl opacity-40"} />
-            
+
             <div className="relative z-10">
               <div className={stat.color + " mb-2.5 flex items-center justify-between"}>
                 <div className={cn("p-1.5 rounded-lg bg-white shadow-sm border", stat.border)}>
@@ -120,7 +180,7 @@ function ManagerDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Trainees Requiring Attention */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.99 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
@@ -133,15 +193,20 @@ function ManagerDashboard() {
             </div>
             <button className="p-1.5 text-text-tertiary hover:text-brand transition-colors"><MoreHorizontal size={16}/></button>
           </div>
-          
+
           <div className="space-y-2.5">
-            {mockTrainees.filter(t => t.attentionReason).slice(0, 5).map((trainee) => (
-              <div key={trainee.id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-border-subtle transition-all hover:bg-slate-50/50 group hover:border-brand/20 shadow-sm shadow-black/[0.01]">
+            {traineesNeedingAttention.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-slate-300">
+                <CheckCircle2 size={32} className="opacity-30 mb-3" />
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-60">All trainees on track</p>
+              </div>
+            ) : traineesNeedingAttention.map((trainee) => (
+              <div key={trainee.traineeId} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-border-subtle transition-all hover:bg-slate-50/50 group hover:border-brand/20 shadow-sm shadow-black/[0.01]">
                 <div className="w-9 h-9 rounded-lg border-2 border-white overflow-hidden shadow-sm shrink-0">
-                   <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover" />
+                   <img src={trainee.avatarUrl ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${trainee.traineeName}`} alt={trainee.traineeName} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
-                   <h4 className="text-sm font-bold text-text-primary group-hover:text-brand transition-colors tracking-tight">{trainee.name}</h4>
+                   <h4 className="text-sm font-bold text-text-primary group-hover:text-brand transition-colors tracking-tight">{trainee.traineeName}</h4>
                    <div className="flex items-center gap-2 mt-0.5">
                        <span className="flex items-center gap-1 text-[8px] font-black bg-bg-danger text-status-danger px-1.5 py-0.5 rounded-full uppercase tracking-wider border border-rose-100 shadow-sm">
                            <Clock size={10} /> {trainee.attentionReason}
@@ -149,25 +214,29 @@ function ManagerDashboard() {
                    </div>
                 </div>
                 <div className="text-right shrink-0">
-                   <p className="text-sm font-black text-text-primary tracking-tight font-display">{trainee.progress}%</p>
-                   <p className="text-[8px] font-black text-text-tertiary uppercase tracking-widest mt-0.5 opacity-50">{trainee.lastUpdate}</p>
+                   <p className="text-sm font-black text-text-primary tracking-tight font-display">{trainee.progressPercentage}%</p>
+                   <p className="text-[8px] font-black text-text-tertiary uppercase tracking-widest mt-0.5 opacity-50">
+                     {trainee.lastUpdated ? formatDate(trainee.lastUpdated) : '—'}
+                   </p>
                 </div>
-                <Link to={`/roadmap/${trainee.id}`} className="p-1.5 text-text-tertiary hover:text-brand transition-all hover:translate-x-0.5 ml-1 bg-slate-50 rounded-lg border border-border-subtle">
-                   <ChevronRight size={14} />
-                </Link>
+                {trainee.roadmapId && (
+                  <Link to={`/roadmap/${trainee.roadmapId}`} className="p-1.5 text-text-tertiary hover:text-brand transition-all hover:translate-x-0.5 ml-1 bg-slate-50 rounded-lg border border-border-subtle">
+                     <ChevronRight size={14} />
+                  </Link>
+                )}
               </div>
             ))}
           </div>
-          
+
           <Link to="/trainees" className="mt-6 text-center text-[8px] font-black uppercase tracking-[0.3em] text-text-tertiary hover:text-brand transition-all group flex items-center justify-center gap-2">
              <span className="w-6 h-[1px] bg-border-subtle group-hover:bg-brand/20 transition-colors" />
-             View All Trainees 
+             View All Trainees
              <span className="w-6 h-[1px] bg-border-subtle group-hover:bg-brand/20 transition-colors" />
           </Link>
         </motion.div>
 
-        {/* Recent Activity */}
-        <motion.div 
+        {/* Recent Activity — placeholder until activity log is implemented */}
+        <motion.div
            initial={{ opacity: 0, scale: 0.99 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.3 }}
@@ -180,30 +249,15 @@ function ManagerDashboard() {
             </div>
             <Link to="/activity" className="p-1.5 text-text-tertiary hover:text-brand transition-all bg-slate-50 rounded-lg shadow-sm"><MoreHorizontal size={16}/></Link>
           </div>
-          <div className="space-y-4 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-50 before:rounded-full flex-1">
-            {mockActivity.slice(0, 5).map((activity) => (
-              <div key={activity.id} className="relative flex items-start gap-3 pl-6 group">
-                <div className={cn(
-                   "absolute left-0 w-[14px] h-[14px] rounded-full border-[2.5px] border-white z-10 transition-transform group-hover:scale-110 shadow-md",
-                  activity.type === "progress" ? "bg-emerald-500 shadow-emerald-500/10" : 
-                  activity.type === "approval" ? "bg-brand shadow-brand/10" :
-                  activity.type === "rejection" ? "bg-rose-500 shadow-rose-500/10" : "bg-slate-200"
-                )}></div>
-                <div className="flex-1 min-w-0">
-                   <p className="text-xs leading-snug text-text-secondary tracking-tight">
-                      <span className="font-bold text-text-primary">{activity.user}</span>
-                      {" "}{activity.action}{" "}
-                      <span className="font-bold text-text-primary bg-slate-50 px-1 py-0.5 rounded-md border border-slate-100">"{activity.target.length > 20 ? activity.target.substring(0, 17) + '...' : activity.target}"</span>
-                   </p>
-                   <span className="text-[9px] text-text-tertiary uppercase font-black tracking-widest block mt-1 opacity-50">{activity.time}</span>
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center flex-1 py-12 text-slate-300">
+            <Clock size={32} className="opacity-30 mb-3" />
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Activity log coming soon</p>
           </div>
         </motion.div>
       </div>
 
-      <motion.div 
+      {/* Pending Requests Review */}
+      <motion.div
          initial={{ opacity: 0, y: 15 }}
          animate={{ opacity: 1, y: 0 }}
          transition={{ delay: 0.4 }}
@@ -216,41 +270,76 @@ function ManagerDashboard() {
           </div>
           <Link to="/requests" className="text-[8px] font-black uppercase tracking-[0.2em] text-brand hover:brightness-110 transition-all bg-brand/5 px-3 py-1.5 rounded-lg border border-brand/10 shadow-sm">View All</Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-           {mockChangeRequests.slice(0, 3).map(req => (
-             <div key={req.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-border-subtle group hover:border-brand/30 transition-all hover:bg-slate-50/50 shadow-sm">
-               <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-9 h-9 rounded-lg flex items-center justify-center font-black text-[9px] border transition-transform group-hover:scale-110",
-                    req.action === "Add" ? "bg-bg-success text-status-success border-emerald-100 shadow-sm" :
-                    req.action === "Delete" ? "bg-bg-danger text-status-danger border-rose-100 shadow-sm" :
-                    req.action === "Move" ? "bg-bg-brand-soft text-brand border-indigo-100 shadow-sm" :
-                    "bg-bg-pending text-status-pending border-amber-100 shadow-sm"
-                  )}>
-                     {req.action.toUpperCase().charAt(0)}
-                  </div>
-                  <div>
-                     <p className="text-xs font-bold text-text-primary leading-none tracking-tight">{req.traineeName}</p>
-                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[8px] font-black uppercase tracking-widest text-text-tertiary opacity-60">{req.action}</span>
-                        <span className="text-[8px] font-bold text-text-secondary truncate max-w-[80px] italic">"{req.topicName}"</span>
-                     </div>
-                  </div>
+        {data.recentPendingRequests.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-slate-300">
+            <CheckCircle2 size={32} className="opacity-30 mb-3" />
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-60">No pending requests</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+             {data.recentPendingRequests.map(req => (
+               <div key={req.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-border-subtle group hover:border-brand/30 transition-all hover:bg-slate-50/50 shadow-sm">
+                 <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-9 h-9 rounded-lg flex items-center justify-center font-black text-[9px] border transition-transform group-hover:scale-110",
+                      req.action === "ADD_TOPIC" ? "bg-bg-success text-status-success border-emerald-100 shadow-sm" :
+                      req.action === "DELETE_TOPIC" ? "bg-bg-danger text-status-danger border-rose-100 shadow-sm" :
+                      req.action === "MOVE_TOPIC" ? "bg-bg-brand-soft text-brand border-indigo-100 shadow-sm" :
+                      "bg-bg-pending text-status-pending border-amber-100 shadow-sm"
+                    )}>
+                       {actionLabel(req.action).charAt(0)}
+                    </div>
+                    <div>
+                       <p className="text-xs font-bold text-text-primary leading-none tracking-tight">{req.requestedByDisplayName}</p>
+                       <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[8px] font-black uppercase tracking-widest text-text-tertiary opacity-60">{actionLabel(req.action)}</span>
+                          <span className="text-[8px] font-bold text-text-secondary truncate max-w-[80px] italic">"{req.proposedTitle ?? req.description}"</span>
+                       </div>
+                    </div>
+                 </div>
+                 <Link to="/requests"><ChevronRight size={14} className="text-text-tertiary opacity-40 group-hover:text-brand transition-all" /></Link>
                </div>
-               <ChevronRight size={14} className="text-text-tertiary opacity-40 group-hover:text-brand transition-all" />
-             </div>
-           ))}
-        </div>
+             ))}
+          </div>
+        )}
       </motion.div>
     </div>
   );
 }
 
 function TraineeDashboard() {
-  const myData = mockTrainees[0]; 
-  const myRequests = mockChangeRequests.filter(r => r.traineeName === myData.name);
-  const myActivity = mockActivity.filter(a => a.user === myData.name || a.target.includes(myData.name));
-  const completedTopics = 24;
+  const [data, setData] = useState<TraineeDashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const result = await dashboardApi.getTrainee();
+        setData(result);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load dashboard');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex items-center gap-3 p-4 bg-bg-danger border border-border-subtle rounded-xl text-sm font-bold text-status-danger">
+        <AlertCircle size={16} /> {error ?? 'Failed to load dashboard'}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-6">
@@ -262,7 +351,9 @@ function TraineeDashboard() {
         <div className="flex gap-4 items-center bg-white border border-border-subtle px-4 py-2 rounded-xl shadow-sm">
            <div className="flex flex-col items-end">
               <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest leading-none">Roadmap Status</span>
-              <span className="text-[10px] font-black text-status-success uppercase tracking-[0.2em] mt-1 block px-2.5 py-0.5 bg-bg-success rounded-lg border border-border-subtle">{myData.roadmapStatus}</span>
+              <span className="text-[10px] font-black text-status-success uppercase tracking-[0.2em] mt-1 block px-2.5 py-0.5 bg-bg-success rounded-lg border border-border-subtle">
+                {data.roadmapStatus ?? 'N/A'}
+              </span>
            </div>
         </div>
       </header>
@@ -270,12 +361,12 @@ function TraineeDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Roadmap Progress", value: `${myData.progress}%`, icon: TrendingUp, color: "text-brand", bg: "bg-bg-brand-soft", border: "border-border-subtle" },
-          { label: "Active Topic", value: myData.activeTopic, icon: Search, color: "text-status-info", bg: "bg-bg-info", border: "border-border-subtle" },
-          { label: "My Requests", value: myRequests.length, icon: Clock, color: "text-status-pending", bg: "bg-bg-pending", border: "border-border-subtle" },
-          { label: "Topics Completed", value: completedTopics, icon: CheckCircle2, color: "text-status-success", bg: "bg-bg-success", border: "border-border-subtle" },
+          { label: "Roadmap Progress", value: `${data.progressPercentage}%`, icon: TrendingUp, color: "text-brand", bg: "bg-bg-brand-soft", border: "border-border-subtle" },
+          { label: "Active Topic", value: data.activeTopic ?? "No active topic", icon: Search, color: "text-status-info", bg: "bg-bg-info", border: "border-border-subtle" },
+          { label: "My Requests", value: data.pendingRequestsCount, icon: Clock, color: "text-status-pending", bg: "bg-bg-pending", border: "border-border-subtle" },
+          { label: "Topics Completed", value: data.completedCount, icon: CheckCircle2, color: "text-status-success", bg: "bg-bg-success", border: "border-border-subtle" },
         ].map((stat, i) => (
-          <motion.div 
+          <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -286,7 +377,7 @@ function TraineeDashboard() {
             )}
           >
             <div className={stat.bg + " absolute top-0 right-0 w-24 h-24 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110 duration-700 blur-3xl opacity-50"} />
-            
+
             <div className="relative z-10">
               <div className={stat.color + " mb-3 flex items-center justify-between"}>
                 <div className={cn("p-2 rounded-xl bg-white shadow-sm border", stat.border)}>
@@ -307,8 +398,8 @@ function TraineeDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* My Recently Completed */}
-        <motion.div 
+        {/* My Recently Completed Topics */}
+        <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4 }}
@@ -321,35 +412,36 @@ function TraineeDashboard() {
             </div>
             <button className="p-2 text-text-tertiary hover:text-brand transition-colors bg-slate-50 rounded-xl"><MoreHorizontal size={18}/></button>
           </div>
-          
+
           <div className="space-y-3 flex-1">
-             {mockActivity.filter(a => a.type === "progress" && (a.user === myData.name || a.target.includes(myData.name))).slice(0, 5).map((activity) => (
-                <div key={activity.id} className="flex items-center gap-4 p-3.5 rounded-[1.25rem] bg-white border border-border-subtle group hover:border-emerald-200 transition-all hover:bg-emerald-50/20 shadow-sm shadow-emerald-500/[0.01]">
-                   <div className="w-10 h-10 rounded-xl bg-status-success flex items-center justify-center text-white shrink-0 shadow-md shadow-status-success/20 group-hover:scale-105 transition-transform">
-                      <CheckCircle2 size={18} strokeWidth={2.5} />
-                   </div>
-                   <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-text-primary truncate tracking-tight">{activity.target.replace('as Completed', '')}</p>
-                      <p className="text-[10px] font-black text-status-success uppercase tracking-widest mt-0.5 opacity-80">{activity.time}</p>
-                   </div>
-                   <ChevronRight size={18} className="text-text-tertiary/20 group-hover:text-status-success group-hover:translate-x-1 transition-all" />
-                </div>
-             ))}
-             {mockActivity.filter(a => a.type === "progress" && (a.user === myData.name || a.target.includes(myData.name))).length === 0 && (
+             {data.recentlyCompletedTopics.length === 0 ? (
                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                   <CheckCircle2 size={40} className="opacity-20 mb-4" />
                   <p className="text-[10px] font-black uppercase tracking-widest">No recently completed topics</p>
                </div>
-             )}
+             ) : data.recentlyCompletedTopics.map((topic) => (
+                <div key={topic.id} className="flex items-center gap-4 p-3.5 rounded-[1.25rem] bg-white border border-border-subtle group hover:border-emerald-200 transition-all hover:bg-emerald-50/20 shadow-sm shadow-emerald-500/[0.01]">
+                   <div className="w-10 h-10 rounded-xl bg-status-success flex items-center justify-center text-white shrink-0 shadow-md shadow-status-success/20 group-hover:scale-105 transition-transform">
+                      <CheckCircle2 size={18} strokeWidth={2.5} />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-text-primary truncate tracking-tight">{topic.title}</p>
+                      <p className="text-[10px] font-black text-status-success uppercase tracking-widest mt-0.5 opacity-80">
+                        {topic.completedAt ? formatDate(topic.completedAt) : '—'}
+                      </p>
+                   </div>
+                   <ChevronRight size={18} className="text-text-tertiary/20 group-hover:text-status-success group-hover:translate-x-1 transition-all" />
+                </div>
+             ))}
           </div>
-          
+
           <Link to="/roadmap/me" className="mt-8 text-center text-[9px] font-black uppercase tracking-[0.2em] text-brand hover:brightness-110 transition-all">
              Continue Roadmap Progress
           </Link>
         </motion.div>
 
-        {/* My Recent Activity */}
-        <motion.div 
+        {/* My Recent Activity — placeholder */}
+        <motion.div
            initial={{ opacity: 0, scale: 0.99 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.3 }}
@@ -361,35 +453,16 @@ function TraineeDashboard() {
               <p className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.15em] mt-0.5 opacity-60">Personal log</p>
             </div>
           </div>
-          <div className="space-y-4 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-50 before:rounded-full flex-1">
-            {myActivity.slice(0, 5).map((activity) => (
-              <div key={activity.id} className="relative flex items-start gap-3 pl-6 group">
-                <div className={cn(
-                  "absolute left-0 w-[14px] h-[14px] rounded-full border-[2.5px] border-white z-10 transition-transform group-hover:scale-110 shadow-md",
-                  activity.type === "progress" ? "bg-emerald-500 shadow-emerald-500/10" : 
-                  activity.type === "approval" ? "bg-brand shadow-brand/10" :
-                  activity.type === "rejection" ? "bg-rose-500 shadow-rose-500/10" : "bg-slate-200"
-                )}></div>
-                <div className="flex-1 min-w-0">
-                   <p className="text-xs leading-snug text-text-secondary tracking-tight">
-                      <span className="font-bold text-text-primary">{activity.user === myData.name ? "You" : activity.user}</span> {activity.action} {activity.target.toLowerCase().includes('as completed') ? (
-                        <>
-                          <span className="font-bold text-text-primary bg-slate-50 px-1 py-0.5 rounded-md border border-slate-100">{activity.target.replace(/ as [Cc]ompleted/, '')}</span> as completed
-                        </>
-                      ) : (
-                        <span className="font-bold text-text-primary bg-slate-50 px-1 py-0.5 rounded-md border border-slate-100">"{activity.target}"</span>
-                      )}
-                   </p>
-                   <span className="text-[9px] text-text-tertiary uppercase font-black tracking-widest block mt-1 opacity-50">{activity.time}</span>
-                </div>
-              </div>
-            ))}
+          <div className="flex flex-col items-center justify-center flex-1 py-12 text-slate-300">
+            <Clock size={32} className="opacity-30 mb-3" />
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Activity log coming soon</p>
           </div>
         </motion.div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <motion.div 
+        {/* Current Focus */}
+        <motion.div
            initial={{ opacity: 0, scale: 0.99 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.4 }}
@@ -400,28 +473,38 @@ function TraineeDashboard() {
               <h3 className="text-base font-bold tracking-tight text-text-primary">Current Focus</h3>
               <p className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.15em] mt-0.5 opacity-60">Active node</p>
             </div>
-            <span className="text-[8px] font-black uppercase tracking-widest text-brand px-2 py-1 bg-brand/5 rounded-lg border border-brand/10 shadow-sm">{myData.specialization} Path</span>
+            {data.specialization && (
+              <span className="text-[8px] font-black uppercase tracking-widest text-brand px-2 py-1 bg-brand/5 rounded-lg border border-brand/10 shadow-sm">
+                {data.specialization} Path
+              </span>
+            )}
           </div>
           <div className="space-y-3">
-             {myData.activeTopic && (
+             {data.activeTopic ? (
                 <div className="p-4 rounded-xl bg-bg-brand-soft border border-border-subtle shadow-sm group cursor-pointer hover:bg-bg-brand-soft/80 transition-all relative overflow-hidden">
                    <p className="text-[8px] font-black text-brand uppercase tracking-[0.2em] mb-1.5 relative z-10">Active Milestone</p>
-                   <p className="text-base font-display font-black text-text-primary leading-tight group-hover:text-brand transition-colors relative z-10">{myData.activeTopic}</p>
+                   <p className="text-base font-display font-black text-text-primary leading-tight group-hover:text-brand transition-colors relative z-10">{data.activeTopic}</p>
                    <div className="mt-3 relative z-10">
                       <div className="flex justify-between items-center mb-2">
                          <span className="text-[9px] font-black text-text-tertiary uppercase tracking-widest opacity-60">Progress</span>
-                         <span className="text-[10px] font-black text-brand">45%</span>
+                         <span className="text-[10px] font-black text-brand">{data.progressPercentage}%</span>
                       </div>
                       <div className="h-1.5 bg-white/50 rounded-full overflow-hidden border border-border-subtle">
-                         <div className="h-full bg-brand rounded-full shadow-lg" style={{ width: '45%' }}></div>
+                         <div className="h-full bg-brand rounded-full shadow-lg" style={{ width: `${data.progressPercentage}%` }}></div>
                       </div>
                    </div>
                 </div>
+             ) : (
+               <div className="flex flex-col items-center justify-center py-10 text-slate-300">
+                 <Search size={32} className="opacity-30 mb-3" />
+                 <p className="text-[10px] font-black uppercase tracking-widest opacity-60">No active topic</p>
+               </div>
              )}
           </div>
         </motion.div>
 
-        <motion.div 
+        {/* My Requests */}
+        <motion.div
            initial={{ opacity: 0, scale: 0.99 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.5 }}
@@ -432,26 +515,31 @@ function TraineeDashboard() {
             <Link to="/requests" className="text-[8px] font-black uppercase tracking-[0.2em] text-brand hover:brightness-110 transition-all bg-brand/5 px-3 py-1.5 rounded-lg border border-brand/10 shadow-sm">See all</Link>
           </div>
           <div className="space-y-2.5 flex-1">
-             {myRequests.slice(0, 3).map(req => (
+             {data.recentRequests.length === 0 ? (
+               <div className="flex flex-col items-center justify-center py-10 text-slate-300">
+                 <Clock size={32} className="opacity-30 mb-3" />
+                 <p className="text-[10px] font-black uppercase tracking-widest opacity-60">No requests yet</p>
+               </div>
+             ) : data.recentRequests.slice(0, 3).map(req => (
                <div key={req.id} className="flex items-center justify-between p-3 bg-white border border-border-subtle rounded-xl hover:bg-slate-50/50 transition-all shadow-sm">
                  <div className="flex items-center gap-3">
                     <div className={cn(
                       "w-9 h-9 rounded-lg flex items-center justify-center text-white font-black text-[9px] shadow-md",
-                      req.action === "Add" ? "bg-status-success shadow-emerald-500/10" :
-                      req.action === "Delete" ? "bg-status-danger shadow-rose-500/10" : "bg-brand shadow-brand/10"
+                      req.action === "ADD_TOPIC" ? "bg-status-success shadow-emerald-500/10" :
+                      req.action === "DELETE_TOPIC" ? "bg-status-danger shadow-rose-500/10" : "bg-brand shadow-brand/10"
                     )}>
-                       {req.action.charAt(0)}
+                       {actionLabel(req.action).charAt(0)}
                     </div>
                     <div>
-                       <p className="text-xs font-bold text-text-primary leading-none tracking-tight">{req.topicName}</p>
+                       <p className="text-xs font-bold text-text-primary leading-none tracking-tight">{req.proposedTitle ?? req.description}</p>
                        <div className="flex items-center gap-1.5 mt-1.5">
                           <span className={cn(
                             "text-[8px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded-full border",
-                            req.status === "Pending" ? "bg-amber-50 text-amber-600 border-amber-100" : 
-                            req.status === "Approved" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
+                            req.status === "PENDING" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                            req.status === "APPROVED" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
                             "bg-rose-50 text-rose-600 border-rose-100"
                           )}>
-                             {req.status === "Pending" ? "Review" : req.status}
+                             {statusLabel(req.status)}
                           </span>
                        </div>
                     </div>

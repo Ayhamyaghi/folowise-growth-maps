@@ -51,6 +51,7 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, "/api/v1/change-requests/pending").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.POST, "/api/v1/change-requests/*/approve").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.POST, "/api/v1/change-requests/*/reject").hasRole("MANAGER")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/dashboard/manager").hasRole("MANAGER")
                     .anyRequest().authenticated()
             }
             .exceptionHandling {

@@ -193,6 +193,79 @@ export const changeRequestApi = {
     }),
 };
 
+// ─── Dashboard types ──────────────────────────────────────────────────────────
+
+export interface TraineeProgressSummary {
+  traineeId: string;
+  traineeName: string;
+  traineeEmail: string;
+  avatarUrl: string | null;
+  roadmapId: string | null;
+  roadmapTitle: string | null;
+  progressPercentage: number;
+  completedCount: number;
+  totalCount: number;
+  attentionReason: string | null;
+  lastUpdated: string | null;
+}
+
+export interface PendingRequestSummary {
+  id: string;
+  requestedByDisplayName: string;
+  action: string;
+  proposedTitle: string | null;
+  description: string;
+}
+
+export interface ManagerDashboardResponse {
+  totalTrainees: number;
+  activeRoadmaps: number;
+  averageProgress: number;
+  pendingChangeRequests: number;
+  completedTopicsThisWeek: number;
+  traineeProgressSummaries: TraineeProgressSummary[];
+  recentPendingRequests: PendingRequestSummary[];
+}
+
+export interface RecentRequestSummary {
+  id: string;
+  action: string;
+  status: string;
+  proposedTitle: string | null;
+  description: string;
+  createdAt: string;
+}
+
+export interface CompletedTopicSummary {
+  id: string;
+  title: string;
+  completedAt: string | null;
+}
+
+export interface TraineeDashboardResponse {
+  traineeId: string;
+  traineeName: string;
+  specialization: string | null;
+  roadmapId: string | null;
+  roadmapTitle: string | null;
+  roadmapStatus: string | null;
+  progressPercentage: number;
+  completedCount: number;
+  totalCount: number;
+  activeTopic: string | null;
+  pendingRequestsCount: number;
+  recentRequests: RecentRequestSummary[];
+  recentlyCompletedTopics: CompletedTopicSummary[];
+}
+
+export const dashboardApi = {
+  getManager: () =>
+    apiFetch<ManagerDashboardResponse>('/dashboard/manager'),
+
+  getTrainee: () =>
+    apiFetch<TraineeDashboardResponse>('/dashboard/trainee'),
+};
+
 export const roadmapApi = {
   getTree: (roadmapId: string) =>
     apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/tree`),
