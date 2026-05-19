@@ -2,6 +2,7 @@ package com.folowise.roadmap.web.error
 
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.AuthenticationException
 import org.springframework.validation.FieldError
@@ -50,6 +51,14 @@ class GlobalExceptionHandler {
     fun handleAuthentication(
         request: HttpServletRequest
     ): ApiError = apiError(HttpStatus.UNAUTHORIZED, "Authentication required", request)
+
+    // 403 — Ownership/access check failed in service layer
+    @ExceptionHandler(AccessDeniedException::class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    fun handleAccessDenied(
+        ex: AccessDeniedException,
+        request: HttpServletRequest
+    ): ApiError = apiError(HttpStatus.FORBIDDEN, ex.message ?: "Access denied", request)
 
     // 404 — Entity not found
     @ExceptionHandler(NoSuchElementException::class)

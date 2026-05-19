@@ -4,5 +4,6 @@ enum class ChangeRequestAction {
     ADD_TOPIC,
     EDIT_TOPIC,
     DELETE_TOPIC,
-    MOVE_TOPIC
+    MOVE_TOPIC,
+    STATUS_CHANGE
 }

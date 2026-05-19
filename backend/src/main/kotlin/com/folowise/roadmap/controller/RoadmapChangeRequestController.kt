@@ -5,6 +5,7 @@ import com.folowise.roadmap.dto.changerequest.SubmitAddTopicRequest
 import com.folowise.roadmap.dto.changerequest.SubmitDeleteTopicRequest
 import com.folowise.roadmap.dto.changerequest.SubmitEditTopicRequest
 import com.folowise.roadmap.dto.changerequest.SubmitMoveTopicRequest
+import com.folowise.roadmap.dto.changerequest.SubmitStatusChangeRequest
 import com.folowise.roadmap.security.UserPrincipal
 import com.folowise.roadmap.service.ChangeRequestService
 import jakarta.validation.Valid
@@ -59,4 +60,13 @@ class RoadmapChangeRequestController(
     ): ResponseEntity<ChangeRequestResponse> =
         ResponseEntity.status(HttpStatus.CREATED)
             .body(changeRequestService.submitMoveTopicRequest(roadmapId, request, principal))
+
+    @PostMapping("/{roadmapId}/change-requests/status-topic")
+    fun submitStatusChangeRequest(
+        @PathVariable roadmapId: UUID,
+        @Valid @RequestBody request: SubmitStatusChangeRequest,
+        @AuthenticationPrincipal principal: UserPrincipal
+    ): ResponseEntity<ChangeRequestResponse> =
+        ResponseEntity.status(HttpStatus.CREATED)
+            .body(changeRequestService.submitStatusChangeRequest(roadmapId, request, principal))
 }

@@ -29,7 +29,8 @@ class AuthService(
             accessToken = token,
             userId = principal.id,
             email = principal.username,
-            role = role
+            role = role,
+            displayName = principal.displayName
         )
     }
 
@@ -40,7 +41,8 @@ class AuthService(
         return CurrentUserResponse(
             userId = principal.id,
             email = principal.username,
-            role = role
+            role = role,
+            displayName = principal.displayName
         )
     }
 }

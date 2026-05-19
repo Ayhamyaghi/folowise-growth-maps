@@ -48,12 +48,23 @@ export interface AuthResponse {
   userId: string;
   email: string;
   role: string;
+  displayName: string;
 }
 
 export interface CurrentUserResponse {
   userId: string;
   email: string;
   role: string;
+  displayName: string;
+}
+
+export interface ApiTopicResource {
+  id: string;
+  title: string;
+  resourceType: string;
+  url: string | null;
+  note: string | null;
+  addedByName: string;
 }
 
 export interface ApiTopicNode {
@@ -65,6 +76,7 @@ export interface ApiTopicNode {
   countable: boolean;
   displayOrder: number;
   children: ApiTopicNode[];
+  resources: ApiTopicResource[];
 }
 
 export interface ApiRoadmapTree {
@@ -78,6 +90,10 @@ export interface ApiRoadmapTree {
     percentage: number;
   };
   topics: ApiTopicNode[];
+  traineeId: string | null;
+  traineeName: string | null;
+  traineeAvatarUrl: string | null;
+  traineeSpecialization: string | null;
 }
 
 export interface AddTopicRequest {
@@ -119,6 +135,7 @@ export interface ChangeRequestResponse {
   proposedParentId: string | null;
   proposedParentTitle: string | null;
   proposedCountable: boolean;
+  proposedStatus: string | null;
   managerNote: string | null;
   createdAt: string;
 }
@@ -144,6 +161,11 @@ export interface SubmitDeleteTopicRequest {
 export interface SubmitMoveTopicRequest {
   topicId: string;
   newParentId: string | null;
+}
+
+export interface SubmitStatusChangeRequest {
+  topicId: string;
+  status: string;
 }
 
 export interface RejectChangeRequestRequest {
@@ -188,6 +210,12 @@ export const changeRequestApi = {
 
   reject: (requestId: string, request: RejectChangeRequestRequest) =>
     apiFetch<ChangeRequestResponse>(`/change-requests/${requestId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
+
+  submitStatusChange: (roadmapId: string, request: SubmitStatusChangeRequest) =>
+    apiFetch<ChangeRequestResponse>(`/roadmaps/${roadmapId}/change-requests/status-topic`, {
       method: 'POST',
       body: JSON.stringify(request),
     }),
@@ -267,6 +295,9 @@ export const dashboardApi = {
 };
 
 export const roadmapApi = {
+  getMyTree: () =>
+    apiFetch<ApiRoadmapTree>('/roadmaps/me/tree'),
+
   getTree: (roadmapId: string) =>
     apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/tree`),
 
@@ -297,5 +328,83 @@ export const roadmapApi = {
     apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics/${topicId}/status`, {
       method: 'PATCH',
       body: JSON.stringify(request),
+    }),
+};
+
+// ─── Trainee types ────────────────────────────────────────────────────────────
+
+export interface TraineeListItemResponse {
+  traineeId: string;
+  traineeName: string;
+  traineeEmail: string;
+  avatarUrl: string | null;
+  specialization: string;
+  roadmapId: string | null;
+  roadmapTitle: string | null;
+  roadmapStatus: string | null;
+  progressPercentage: number;
+  completedCount: number;
+  totalCount: number;
+  activeTopic: string | null;
+  lastUpdated: string | null;
+  attentionReason: string | null;
+}
+
+export interface CreateTraineeRequest {
+  displayName: string;
+  email: string;
+  password: string;
+  specializationName: string;
+  roadmapTitle?: string;
+}
+
+export const traineeApi = {
+  listAll: () =>
+    apiFetch<TraineeListItemResponse[]>('/trainees'),
+
+  getById: (traineeId: string) =>
+    apiFetch<TraineeListItemResponse>(`/trainees/${traineeId}`),
+
+  create: (request: CreateTraineeRequest) =>
+    apiFetch<TraineeListItemResponse>('/trainees', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
+};
+
+// ─── Activity types ───────────────────────────────────────────────────────────
+
+export interface ActivityEventResponse {
+  id: string;
+  eventType: string;
+  summary: string;
+  actorName: string | null;
+  createdAt: string;
+}
+
+export const activityApi = {
+  listEvents: () =>
+    apiFetch<ActivityEventResponse[]>('/activity'),
+};
+
+// ─── Resource types ───────────────────────────────────────────────────────────
+
+export interface AddResourceRequest {
+  title: string;
+  resourceType: string;
+  url?: string;
+  note?: string;
+}
+
+export const resourceApi = {
+  add: (roadmapId: string, topicId: string, request: AddResourceRequest) =>
+    apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics/${topicId}/resources`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }),
+
+  delete: (roadmapId: string, topicId: string, resourceId: string) =>
+    apiFetch<ApiRoadmapTree>(`/roadmaps/${roadmapId}/topics/${topicId}/resources/${resourceId}`, {
+      method: 'DELETE',
     }),
 };

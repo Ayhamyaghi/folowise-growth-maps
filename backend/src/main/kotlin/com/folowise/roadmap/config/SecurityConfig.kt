@@ -44,14 +44,20 @@ class SecurityConfig(
                         "/swagger-ui.html",
                         "/api/v1/auth/login"
                     ).permitAll()
+                    // Structural mutations: MANAGER only; TRAINEE submits change requests instead
                     .requestMatchers(HttpMethod.POST, "/api/v1/roadmaps/*/topics").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.PUT, "/api/v1/roadmaps/*/topics/*").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.DELETE, "/api/v1/roadmaps/*/topics/*").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/roadmaps/*/topics/*/move").hasRole("MANAGER")
+                    // Status update: open to authenticated users; ownership enforced in service layer
+                    .requestMatchers(HttpMethod.PATCH, "/api/v1/roadmaps/*/topics/*/status").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/v1/change-requests/pending").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.POST, "/api/v1/change-requests/*/approve").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.POST, "/api/v1/change-requests/*/reject").hasRole("MANAGER")
                     .requestMatchers(HttpMethod.GET, "/api/v1/dashboard/manager").hasRole("MANAGER")
+                    .requestMatchers(HttpMethod.POST, "/api/v1/trainees").hasRole("MANAGER")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/trainees").hasRole("MANAGER")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/trainees/**").hasRole("MANAGER")
                     .anyRequest().authenticated()
             }
             .exceptionHandling {

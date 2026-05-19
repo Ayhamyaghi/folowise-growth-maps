@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { 
-  UserPlus, 
-  Trash2, 
-  Shield, 
-  User, 
-  Mail, 
-  Key, 
+import {
+  UserPlus,
+  Trash2,
+  Shield,
+  User,
+  Mail,
+  Key,
   Check,
   MoreHorizontal,
   ChevronRight,
@@ -18,22 +19,35 @@ import {
   Users,
   Fingerprint
 } from "lucide-react";
-import { mockTrainees } from "../data/mockData";
 import { cn } from "../lib/utils";
-
 import { useAuth } from "../App";
+import { traineeApi, TraineeListItemResponse, dashboardApi, TraineeDashboardResponse } from "../lib/apiClient";
 
 export default function AccountsPage() {
   const { role } = useAuth();
-  
+
   if (role === "manager") {
     return <ManagerAccountsView />;
   }
-  
+
   return <TraineeAccountsView />;
 }
 
 function ManagerAccountsView() {
+  const [trainees, setTrainees] = useState<TraineeListItemResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    traineeApi.listAll()
+      .then(setTrainees)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  function avatarSrc(t: TraineeListItemResponse) {
+    return t.avatarUrl ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(t.traineeName)}`;
+  }
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-20 px-4 md:px-0">
       <header className="flex justify-between items-end">
@@ -51,7 +65,7 @@ function ManagerAccountsView() {
             <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                <Shield size={80} />
             </div>
-            
+
             <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center mb-3 border border-border-subtle shadow-sm">
                <Fingerprint size={18} className="text-brand" />
             </div>
@@ -79,17 +93,21 @@ function ManagerAccountsView() {
                <Users size={18} className="text-brand" />
             </div>
             <h3 className="text-lg font-display font-black mb-0.5 text-text-primary">Trainee Accounts</h3>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-text-tertiary mb-4 opacity-60">Seats: {mockTrainees.length}/100</p>
-            <div className="flex -space-x-2 mb-1">
-               {mockTrainees.slice(0, 5).map((t, i) => (
-                  <div key={i} className="w-7 h-7 rounded-lg border-2 border-white overflow-hidden shadow-sm bg-white">
-                     <img src={t.avatar} alt={t.name} className="w-full h-full object-cover" />
-                  </div>
-               ))}
-               <div className="w-7 h-7 rounded-lg border-2 border-white bg-slate-50 flex items-center justify-center text-[8px] font-black text-text-tertiary">
-                  +{mockTrainees.length - 5}
-               </div>
-            </div>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-text-tertiary mb-4 opacity-60">Seats: {trainees.length}/100</p>
+            {!isLoading && trainees.length > 0 && (
+              <div className="flex -space-x-2 mb-1">
+                 {trainees.slice(0, 5).map((t, i) => (
+                    <div key={i} className="w-7 h-7 rounded-lg border-2 border-white overflow-hidden shadow-sm bg-white">
+                       <img src={avatarSrc(t)} alt={t.traineeName} className="w-full h-full object-cover" />
+                    </div>
+                 ))}
+                 {trainees.length > 5 && (
+                   <div className="w-7 h-7 rounded-lg border-2 border-white bg-slate-50 flex items-center justify-center text-[8px] font-black text-text-tertiary">
+                     +{trainees.length - 5}
+                   </div>
+                 )}
+              </div>
+            )}
          </div>
       </div>
 
@@ -104,17 +122,19 @@ function ManagerAccountsView() {
             </div>
          </div>
          <div className="divide-y divide-border-subtle">
-            {mockTrainees.map((trainee) => (
-               <div key={trainee.id} className="p-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-all group">
+            {isLoading ? (
+              <div className="p-8 text-center text-text-tertiary text-[9px] font-black uppercase tracking-widest opacity-60">Loading...</div>
+            ) : trainees.map((trainee) => (
+               <div key={trainee.traineeId} className="p-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-all group">
                   <div className="flex items-center gap-3">
                      <div className="w-9 h-9 rounded-lg bg-white overflow-hidden border border-border-subtle shadow-sm">
-                        <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover" />
+                        <img src={avatarSrc(trainee)} alt={trainee.traineeName} className="w-full h-full object-cover" />
                      </div>
                      <div>
-                        <h4 className="text-[15px] font-display font-black tracking-tight text-text-primary group-hover:text-brand transition-colors leading-tight">{trainee.name}</h4>
+                        <h4 className="text-[15px] font-display font-black tracking-tight text-text-primary group-hover:text-brand transition-colors leading-tight">{trainee.traineeName}</h4>
                         <div className="flex items-center gap-2 mt-0.5">
                            <span className="text-[9px] font-bold text-text-tertiary lowercase flex items-center gap-1.5 opacity-60">
-                              <Mail size={10} className="text-brand opacity-60" /> {trainee.email}
+                              <Mail size={10} className="text-brand opacity-60" /> {trainee.traineeEmail}
                            </span>
                            <span className="w-0.5 h-0.5 bg-border-subtle rounded-full" />
                            <span className="text-[8px] font-black text-brand uppercase tracking-[0.1em] border border-brand/20 px-1.5 py-0.5 rounded-lg">{trainee.specialization}</span>
@@ -146,8 +166,23 @@ function ManagerAccountsView() {
 }
 
 function TraineeAccountsView() {
-  const me = mockTrainees[0]; // Prototope user Alex Rivera
-  
+  const { userId, email } = useAuth();
+  const [dashboardData, setDashboardData] = useState<TraineeDashboardResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    dashboardApi.getTrainee()
+      .then(setDashboardData)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const name = dashboardData?.traineeName ?? email ?? '—';
+  const specialization = dashboardData?.specialization ?? '—';
+  const progress = dashboardData?.progressPercentage ?? 0;
+  const displayId = userId ? `${userId.slice(0, 8).toUpperCase()}-FLOW` : '—';
+  const avatarSrc = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`;
+
    return (
     <div className="space-y-6 max-w-4xl mx-auto pb-24 px-4 md:px-0">
       <header>
@@ -159,25 +194,25 @@ function TraineeAccountsView() {
         <div className="lg:col-span-1 space-y-4">
            <div className="bg-white border border-border-subtle rounded-2xl p-6 text-center shadow-xl">
                <div className="w-20 h-20 rounded-xl border-4 border-white shadow-lg overflow-hidden mx-auto mb-5 relative group ring-1 ring-slate-100">
-                  <img src={me.avatar} alt={me.name} className="w-full h-full object-cover" />
+                  <img src={avatarSrc} alt={name} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-brand/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-sm">
                      <User size={18} className="text-white" />
                   </div>
               </div>
-              <h2 className="text-lg font-display font-black tracking-tight text-text-primary leading-tight">{me.name}</h2>
-              <p className="text-[8px] font-black text-brand uppercase tracking-[0.3em] mt-1.5 bg-brand/[0.03] inline-block px-2.5 py-0.5 rounded-lg border border-brand/5 shadow-sm">{me.specialization} Unit</p>
-              
+              <h2 className="text-lg font-display font-black tracking-tight text-text-primary leading-tight">{name}</h2>
+              <p className="text-[8px] font-black text-brand uppercase tracking-[0.3em] mt-1.5 bg-brand/[0.03] inline-block px-2.5 py-0.5 rounded-lg border border-brand/5 shadow-sm">{specialization} Unit</p>
+
               <div className="mt-5 pt-5 border-t border-border-subtle text-left">
                  <div className="flex justify-between items-center mb-1.5">
                     <span className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] opacity-40">Milestone</span>
-                    <span className="text-[9px] font-black text-brand tracking-widest">{me.progress}%</span>
+                    <span className="text-[9px] font-black text-brand tracking-widest">{progress}%</span>
                  </div>
                  <div className="w-full h-1.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-px">
-                    <motion.div 
+                    <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: `${me.progress}%` }}
+                        animate={{ width: `${progress}%` }}
                         transition={{ duration: 1.5, ease: "easeOut" }}
-                        className="h-full bg-brand rounded-full shadow-lg" 
+                        className="h-full bg-brand rounded-full shadow-lg"
                     />
                  </div>
               </div>
@@ -198,13 +233,13 @@ function TraineeAccountsView() {
                     <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] flex items-center gap-1.5 opacity-60">
                         <Mail size={12} className="text-brand" /> Primary Email
                     </label>
-                    <p className="text-[14px] font-black text-text-primary tracking-tight">{me.email}</p>
+                    <p className="text-[14px] font-black text-text-primary tracking-tight">{email ?? '—'}</p>
                  </div>
                  <div className="space-y-1">
                     <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] flex items-center gap-1.5 opacity-60">
                         <Shield size={12} className="text-brand" /> Unit Authority
                     </label>
-                    <p className="text-[14px] font-black text-text-primary tracking-tight">{me.specialization}</p>
+                    <p className="text-[14px] font-black text-text-primary tracking-tight">{specialization}</p>
                  </div>
                  <div className="space-y-1.5">
                     <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] flex items-center gap-1.5 opacity-60">
@@ -219,7 +254,7 @@ function TraineeAccountsView() {
                     <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] flex items-center gap-1.5 opacity-60">
                         <Fingerprint size={12} className="text-brand" /> Secure UID
                     </label>
-                    <p className="text-[14px] font-black text-brand tracking-tighter opacity-80 uppercase">{me.id}-FLOW</p>
+                    <p className="text-[14px] font-black text-brand tracking-tighter opacity-80 uppercase">{displayId}</p>
                  </div>
               </div>
            </div>
@@ -236,14 +271,14 @@ function TraineeAccountsView() {
                        </div>
                        <div>
                           <p className="text-[13px] font-display font-black text-text-primary leading-tight mb-0.5 uppercase tracking-tight">Cipher Rotation</p>
-                          <p className="text-[8px] text-text-tertiary font-black uppercase tracking-[0.1em] opacity-40">120 Days ago</p>
+                          <p className="text-[8px] text-text-tertiary font-black uppercase tracking-[0.1em] opacity-40">Password management</p>
                        </div>
                     </div>
                     <button className="text-[8px] font-black text-brand uppercase tracking-[0.2em] px-3.5 py-1.5 bg-brand/5 hover:bg-brand/10 rounded-lg transition-all active:scale-95 border border-brand/10">Rotate</button>
                  </div>
               </div>
            </div>
-           
+
            <div className="text-center pt-6">
                  <button className="text-[9px] font-black text-text-tertiary uppercase tracking-[0.4em] hover:text-rose-500 transition-all opacity-40 hover:opacity-100 active:scale-95 leading-none">Relinquish Authority</button>
            </div>

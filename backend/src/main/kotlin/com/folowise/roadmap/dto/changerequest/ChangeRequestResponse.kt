@@ -17,6 +17,7 @@ data class ChangeRequestResponse(
     val proposedParentId: UUID?,
     val proposedParentTitle: String?,
     val proposedCountable: Boolean,
+    val proposedStatus: String?,
     val managerNote: String?,
     val createdAt: OffsetDateTime
 )

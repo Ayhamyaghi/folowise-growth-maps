@@ -7,5 +7,6 @@ data class AuthResponse(
     val tokenType: String = "Bearer",
     val userId: UUID,
     val email: String,
-    val role: String
+    val role: String,
+    val displayName: String
 )

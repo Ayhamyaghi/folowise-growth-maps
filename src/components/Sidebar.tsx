@@ -33,7 +33,7 @@ const navItems = [
 
 export default function Sidebar() {
   const location = useLocation();
-  const { role, logout } = useAuth();
+  const { role, logout, displayName } = useAuth();
 
   const filteredNavItems = navItems.filter(item => !item.roles || item.roles.includes(role || ""));
 
@@ -77,13 +77,13 @@ export default function Sidebar() {
         <div className="flex items-center gap-3 px-1">
           <div className="relative group">
             <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-border-subtle overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-500">
-               <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${role === "manager" ? "Manager" : "Alex Rivera"}`} alt={role === "manager" ? "Manager" : "Trainee"} className="w-full h-full object-cover" />
+               <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName ?? role}`} alt={displayName ?? role ?? ''} className="w-full h-full object-cover" />
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full shadow-lg shadow-emerald-500/20" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-text-primary truncate tracking-tight uppercase leading-tight">{role === "manager" ? "Manager" : "Alex Rivera"}</p>
-            <p className="text-[8px] font-black text-text-tertiary truncate tracking-widest mt-0.5 opacity-70 uppercase">{role === "manager" ? "Administration" : "Engineering"}</p>
+            <p className="text-[10px] font-bold text-text-primary truncate tracking-tight uppercase leading-tight">{displayName ?? role}</p>
+            <p className="text-[8px] font-black text-text-tertiary truncate tracking-widest mt-0.5 opacity-70 uppercase">{role === "manager" ? "Administration" : "Trainee"}</p>
           </div>
         </div>
 

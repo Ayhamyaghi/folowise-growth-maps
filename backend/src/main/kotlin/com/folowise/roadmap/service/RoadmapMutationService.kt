@@ -1,6 +1,7 @@
 package com.folowise.roadmap.service
 
 import com.folowise.roadmap.domain.entity.RoadmapTopicEntity
+import com.folowise.roadmap.domain.enums.RoadmapStatus
 import com.folowise.roadmap.domain.enums.TopicStatus
 import com.folowise.roadmap.dto.roadmap.AddRoadmapTopicRequest
 import com.folowise.roadmap.dto.roadmap.EditRoadmapTopicRequest
@@ -9,6 +10,9 @@ import com.folowise.roadmap.dto.roadmap.RoadmapTreeResponse
 import com.folowise.roadmap.dto.roadmap.UpdateRoadmapTopicStatusRequest
 import com.folowise.roadmap.repository.RoadmapRepository
 import com.folowise.roadmap.repository.RoadmapTopicRepository
+import com.folowise.roadmap.repository.TraineeProfileRepository
+import com.folowise.roadmap.security.UserPrincipal
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
@@ -18,8 +22,23 @@ import java.util.UUID
 class RoadmapMutationService(
     private val roadmapRepository: RoadmapRepository,
     private val roadmapTopicRepository: RoadmapTopicRepository,
-    private val roadmapQueryService: RoadmapQueryService
+    private val roadmapQueryService: RoadmapQueryService,
+    private val traineeProfileRepository: TraineeProfileRepository
 ) {
+
+    /**
+     * Validates that [principal] is allowed to mutate [roadmapId].
+     * MANAGER may mutate any roadmap. TRAINEE may only mutate their own active roadmap.
+     */
+    private fun checkAccess(roadmapId: UUID, principal: UserPrincipal) {
+        if (principal.authorities.any { it.authority == "ROLE_MANAGER" }) return
+        val profile = traineeProfileRepository.findByUserId(principal.id)
+            .orElseThrow { AccessDeniedException("No trainee profile found for current user") }
+        val activeRoadmap = roadmapRepository.findByTraineeIdAndStatus(requireNotNull(profile.id), RoadmapStatus.ACTIVE)
+            .orElseThrow { AccessDeniedException("No active roadmap found for current user") }
+        if (activeRoadmap.id != roadmapId) throw AccessDeniedException("Roadmap does not belong to current user")
+    }
+
 
     /**
      * Adds a new topic to the roadmap and returns the refreshed [RoadmapTreeResponse].
@@ -34,7 +53,8 @@ class RoadmapMutationService(
      *  - The full refreshed tree is returned so the caller can update the UI in one round-trip.
      */
     @Transactional
-    fun addTopic(roadmapId: UUID, request: AddRoadmapTopicRequest): RoadmapTreeResponse {
+    fun addTopic(roadmapId: UUID, request: AddRoadmapTopicRequest, principal: UserPrincipal? = null): RoadmapTreeResponse {
+        if (principal != null) checkAccess(roadmapId, principal)
         val roadmap = roadmapRepository.findById(roadmapId)
             .orElseThrow { NoSuchElementException("Roadmap not found: $roadmapId") }
 
@@ -82,7 +102,8 @@ class RoadmapMutationService(
      *  - The full refreshed tree is returned so the caller can update the UI in one round-trip.
      */
     @Transactional
-    fun deleteTopic(roadmapId: UUID, topicId: UUID): RoadmapTreeResponse {
+    fun deleteTopic(roadmapId: UUID, topicId: UUID, principal: UserPrincipal? = null): RoadmapTreeResponse {
+        if (principal != null) checkAccess(roadmapId, principal)
         roadmapRepository.findById(roadmapId)
             .orElseThrow { NoSuchElementException("Roadmap not found: $roadmapId") }
 
@@ -108,7 +129,8 @@ class RoadmapMutationService(
      *  - [parentId], [displayOrder], and [status] are not changed.
      */
     @Transactional
-    fun editTopic(roadmapId: UUID, topicId: UUID, request: EditRoadmapTopicRequest): RoadmapTreeResponse {
+    fun editTopic(roadmapId: UUID, topicId: UUID, request: EditRoadmapTopicRequest, principal: UserPrincipal? = null): RoadmapTreeResponse {
+        if (principal != null) checkAccess(roadmapId, principal)
         roadmapRepository.findById(roadmapId)
             .orElseThrow { NoSuchElementException("Roadmap not found: $roadmapId") }
 
@@ -146,7 +168,8 @@ class RoadmapMutationService(
      *  - Title, description, status, and countable are unchanged.
      */
     @Transactional
-    fun moveTopic(roadmapId: UUID, topicId: UUID, request: MoveRoadmapTopicRequest): RoadmapTreeResponse {
+    fun moveTopic(roadmapId: UUID, topicId: UUID, request: MoveRoadmapTopicRequest, principal: UserPrincipal? = null): RoadmapTreeResponse {
+        if (principal != null) checkAccess(roadmapId, principal)
         roadmapRepository.findById(roadmapId)
             .orElseThrow { NoSuchElementException("Roadmap not found: $roadmapId") }
 
@@ -202,7 +225,8 @@ class RoadmapMutationService(
      *  - The full refreshed tree is returned so progress recalculates immediately.
      */
     @Transactional
-    fun updateTopicStatus(roadmapId: UUID, topicId: UUID, request: UpdateRoadmapTopicStatusRequest): RoadmapTreeResponse {
+    fun updateTopicStatus(roadmapId: UUID, topicId: UUID, request: UpdateRoadmapTopicStatusRequest, principal: UserPrincipal? = null): RoadmapTreeResponse {
+        if (principal != null) checkAccess(roadmapId, principal)
         roadmapRepository.findById(roadmapId)
             .orElseThrow { NoSuchElementException("Roadmap not found: $roadmapId") }
 

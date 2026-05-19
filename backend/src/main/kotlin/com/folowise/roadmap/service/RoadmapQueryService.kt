@@ -1,32 +1,78 @@
 package com.folowise.roadmap.service
 
 import com.folowise.roadmap.domain.entity.RoadmapTopicEntity
+import com.folowise.roadmap.domain.entity.TopicResourceEntity
+import com.folowise.roadmap.domain.enums.RoadmapStatus
 import com.folowise.roadmap.domain.enums.TopicStatus
+import com.folowise.roadmap.dto.resource.TopicResourceNodeResponse
 import com.folowise.roadmap.dto.roadmap.RoadmapProgressResponse
 import com.folowise.roadmap.dto.roadmap.RoadmapTopicNodeResponse
 import com.folowise.roadmap.dto.roadmap.RoadmapTreeResponse
 import com.folowise.roadmap.repository.RoadmapRepository
 import com.folowise.roadmap.repository.RoadmapTopicRepository
+import com.folowise.roadmap.repository.TopicResourceRepository
+import com.folowise.roadmap.repository.TraineeProfileRepository
+import com.folowise.roadmap.security.UserPrincipal
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 @Service
 class RoadmapQueryService(
     private val roadmapRepository: RoadmapRepository,
-    private val roadmapTopicRepository: RoadmapTopicRepository
+    private val roadmapTopicRepository: RoadmapTopicRepository,
+    private val topicResourceRepository: TopicResourceRepository,
+    private val traineeProfileRepository: TraineeProfileRepository
 ) {
+
+    /**
+     * Loads the active roadmap for the authenticated trainee.
+     * Throws [NoSuchElementException] if the user has no trainee profile or no active roadmap.
+     */
+    @Transactional(readOnly = true)
+    fun getMyRoadmapTree(principal: UserPrincipal): RoadmapTreeResponse {
+        val profile = traineeProfileRepository.findByUserId(principal.id)
+            .orElseThrow { NoSuchElementException("No trainee profile found for current user") }
+        val roadmap = roadmapRepository.findByTraineeIdAndStatus(requireNotNull(profile.id), RoadmapStatus.ACTIVE)
+            .orElseThrow { NoSuchElementException("No active roadmap found for current user") }
+        return getRoadmapTree(requireNotNull(roadmap.id))
+    }
+
+    /**
+     * Validates that [principal] is allowed to access [roadmapId].
+     * MANAGER may access any roadmap. TRAINEE may only access their own active roadmap.
+     */
+    private fun checkAccess(roadmapId: UUID, principal: UserPrincipal) {
+        if (principal.authorities.any { it.authority == "ROLE_MANAGER" }) return
+        val profile = traineeProfileRepository.findByUserId(principal.id)
+            .orElseThrow { AccessDeniedException("No trainee profile found for current user") }
+        val activeRoadmap = roadmapRepository.findByTraineeIdAndStatus(requireNotNull(profile.id), RoadmapStatus.ACTIVE)
+            .orElseThrow { AccessDeniedException("No active roadmap found for current user") }
+        if (activeRoadmap.id != roadmapId) throw AccessDeniedException("Roadmap does not belong to current user")
+    }
 
     /**
      * Loads a roadmap by [roadmapId] and returns a fully nested tree response
      * ready for both List View and Tree View rendering.
      *
+     * When [principal] is supplied, ownership is validated before loading.
      * Throws [NoSuchElementException] if no roadmap exists with the given id.
      */
-    fun getRoadmapTree(roadmapId: UUID): RoadmapTreeResponse {
+    @Transactional(readOnly = true)
+    fun getRoadmapTree(roadmapId: UUID, principal: UserPrincipal? = null): RoadmapTreeResponse {
+        if (principal != null) checkAccess(roadmapId, principal)
         val roadmap = roadmapRepository.findById(roadmapId)
             .orElseThrow { NoSuchElementException("Roadmap not found: $roadmapId") }
 
         val flatTopics = roadmapTopicRepository.findAllByRoadmapIdOrderByDisplayOrderAsc(roadmapId)
+
+        val topicIds = flatTopics.mapNotNull { it.id }
+        val resourcesByTopicId: Map<UUID, List<TopicResourceEntity>> = if (topicIds.isEmpty()) emptyMap()
+            else topicResourceRepository.findAllByTopicIdIn(topicIds)
+                .groupBy { requireNotNull(it.topic.id) }
+
+        val trainee = roadmap.trainee
 
         return RoadmapTreeResponse(
             roadmapId = requireNotNull(roadmap.id),
@@ -34,7 +80,11 @@ class RoadmapQueryService(
             description = roadmap.description,
             status = roadmap.status.name,
             progress = calculateProgress(flatTopics),
-            topics = buildTopicTree(flatTopics)
+            topics = buildTopicTree(flatTopics, resourcesByTopicId),
+            traineeId = trainee.id,
+            traineeName = trainee.user.displayName,
+            traineeAvatarUrl = trainee.avatarUrl,
+            traineeSpecialization = trainee.specialization.name
         )
     }
 
@@ -50,7 +100,10 @@ class RoadmapQueryService(
      *
      * Returns only the root-level nodes; children are nested recursively inside them.
      */
-    fun buildTopicTree(topics: List<RoadmapTopicEntity>): List<RoadmapTopicNodeResponse> {
+    fun buildTopicTree(
+        topics: List<RoadmapTopicEntity>,
+        resourcesByTopicId: Map<UUID, List<TopicResourceEntity>> = emptyMap()
+    ): List<RoadmapTopicNodeResponse> {
         // Intermediate mutable node used only during tree assembly.
         data class MutableNode(
             val response: RoadmapTopicNodeResponse,
@@ -63,6 +116,16 @@ class RoadmapQueryService(
         val nodeMap = LinkedHashMap<UUID, MutableNode>(topics.size)
         for (topic in topics) {
             val id = requireNotNull(topic.id) { "Topic id must not be null" }
+            val resources = resourcesByTopicId[id]?.map { r ->
+                TopicResourceNodeResponse(
+                    id = requireNotNull(r.id),
+                    title = r.title,
+                    resourceType = r.resourceType.name,
+                    url = r.url,
+                    note = r.note,
+                    addedByName = r.addedBy.displayName
+                )
+            } ?: emptyList()
             nodeMap[id] = MutableNode(
                 response = RoadmapTopicNodeResponse(
                     id = id,
@@ -72,7 +135,8 @@ class RoadmapQueryService(
                     status = topic.status.name,
                     countable = topic.isCountable,
                     displayOrder = topic.displayOrder,
-                    children = emptyList() // replaced below after sorting
+                    children = emptyList(), // replaced below after sorting
+                    resources = resources
                 )
             )
         }

@@ -34,8 +34,9 @@ interface AuthContextType {
   role: Role;
   userId: string | null;
   email: string | null;
+  displayName: string | null;
   isLoading: boolean;
-  login: (token: string, userId: string, email: string, role: Role) => void;
+  login: (token: string, userId: string, email: string, role: Role, displayName: string) => void;
   logout: () => void;
 }
 
@@ -83,6 +84,7 @@ export default function App() {
   const [role, setRole] = useState<Role>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // On mount, validate existing token via /me
@@ -99,11 +101,12 @@ export default function App() {
         if (!res.ok) throw new Error('Session expired');
         return res.json();
       })
-      .then((data: { userId: string; email: string; role: string }) => {
+      .then((data: { userId: string; email: string; role: string; displayName: string }) => {
         const mappedRole: Role = data.role === 'MANAGER' ? 'manager' : 'trainee';
         setRole(mappedRole);
         setUserId(data.userId);
         setEmail(data.email);
+        setDisplayName(data.displayName);
       })
       .catch(() => {
         clearToken();
@@ -111,11 +114,12 @@ export default function App() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const login = (token: string, newUserId: string, newEmail: string, newRole: Role) => {
+  const login = (token: string, newUserId: string, newEmail: string, newRole: Role, newDisplayName: string) => {
     localStorage.setItem('auth_token', token);
     setRole(newRole);
     setUserId(newUserId);
     setEmail(newEmail);
+    setDisplayName(newDisplayName);
   };
 
   const logout = () => {
@@ -123,6 +127,7 @@ export default function App() {
     setRole(null);
     setUserId(null);
     setEmail(null);
+    setDisplayName(null);
   };
 
   // Handle default font loading
@@ -134,7 +139,7 @@ export default function App() {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ role, userId, email, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ role, userId, email, displayName, isLoading, login, logout }}>
       <Router>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

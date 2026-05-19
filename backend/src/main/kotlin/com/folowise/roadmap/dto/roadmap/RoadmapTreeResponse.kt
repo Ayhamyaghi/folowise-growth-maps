@@ -8,5 +8,9 @@ data class RoadmapTreeResponse(
     val description: String?,
     val status: String,
     val progress: RoadmapProgressResponse,
-    val topics: List<RoadmapTopicNodeResponse>
+    val topics: List<RoadmapTopicNodeResponse>,
+    val traineeId: UUID? = null,
+    val traineeName: String? = null,
+    val traineeAvatarUrl: String? = null,
+    val traineeSpecialization: String? = null
 )

@@ -2,6 +2,7 @@ package com.folowise.roadmap.domain.entity
 
 import com.folowise.roadmap.domain.enums.ChangeRequestAction
 import com.folowise.roadmap.domain.enums.ChangeRequestStatus
+import com.folowise.roadmap.domain.enums.TopicStatus
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
@@ -86,6 +87,11 @@ open class RoadmapChangeRequestEntity(
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "proposed_parent_id", nullable = true)
     open var proposedParent: RoadmapTopicEntity? = null
+
+    // Proposed status for STATUS_CHANGE requests.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "proposed_status", length = 50)
+    open var proposedStatus: TopicStatus? = null
 
     // Written by the manager when approving or rejecting.
     @Column(name = "manager_note", columnDefinition = "TEXT")

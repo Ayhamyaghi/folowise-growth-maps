@@ -1,5 +1,6 @@
 package com.folowise.roadmap.dto.roadmap
 
+import com.folowise.roadmap.dto.resource.TopicResourceNodeResponse
 import java.util.UUID
 
 data class RoadmapTopicNodeResponse(
@@ -10,5 +11,6 @@ data class RoadmapTopicNodeResponse(
     val status: String,
     val countable: Boolean,
     val displayOrder: Int,
-    val children: List<RoadmapTopicNodeResponse>
+    val children: List<RoadmapTopicNodeResponse>,
+    val resources: List<TopicResourceNodeResponse> = emptyList()
 )

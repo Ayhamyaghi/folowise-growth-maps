@@ -54,7 +54,7 @@ export default function LoginPage() {
       }
       const data = await res.json();
       const role: "manager" | "trainee" = data.role === 'MANAGER' ? 'manager' : 'trainee';
-      login(data.accessToken, data.userId, data.email, role);
+      login(data.accessToken, data.userId, data.email, role, data.displayName ?? data.email);
       navigate('/');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please try again.');

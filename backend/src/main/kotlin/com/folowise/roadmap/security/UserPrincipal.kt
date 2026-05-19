@@ -20,6 +20,7 @@ import java.util.UUID
  */
 class UserPrincipal(
     val id: UUID,
+    val displayName: String,
     private val email: String,
     private val password: String,
     private val authorities: Collection<GrantedAuthority>,
@@ -43,6 +44,7 @@ class UserPrincipal(
          */
         fun fromEntity(user: UserEntity): UserPrincipal = UserPrincipal(
             id = requireNotNull(user.id) { "UserEntity.id must not be null when building UserPrincipal" },
+            displayName = user.displayName,
             email = user.email,
             password = user.passwordHash,
             authorities = listOf(SimpleGrantedAuthority("ROLE_${user.role.name}")),

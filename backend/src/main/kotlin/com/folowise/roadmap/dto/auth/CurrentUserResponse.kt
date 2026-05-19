@@ -5,5 +5,6 @@ import java.util.UUID
 data class CurrentUserResponse(
     val userId: UUID,
     val email: String,
-    val role: String
+    val role: String,
+    val displayName: String
 )

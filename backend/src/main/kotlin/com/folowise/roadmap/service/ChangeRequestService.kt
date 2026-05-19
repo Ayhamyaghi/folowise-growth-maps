@@ -6,16 +6,20 @@ import com.folowise.roadmap.domain.enums.ChangeRequestAction
 import com.folowise.roadmap.domain.enums.ChangeRequestStatus
 import com.folowise.roadmap.dto.changerequest.ChangeRequestResponse
 import com.folowise.roadmap.dto.changerequest.RejectChangeRequestRequest
+import com.folowise.roadmap.domain.enums.RoadmapStatus
 import com.folowise.roadmap.dto.changerequest.SubmitAddTopicRequest
 import com.folowise.roadmap.dto.changerequest.SubmitDeleteTopicRequest
 import com.folowise.roadmap.dto.changerequest.SubmitEditTopicRequest
 import com.folowise.roadmap.dto.changerequest.SubmitMoveTopicRequest
+import com.folowise.roadmap.dto.changerequest.SubmitStatusChangeRequest
 import com.folowise.roadmap.dto.roadmap.AddRoadmapTopicRequest
 import com.folowise.roadmap.dto.roadmap.EditRoadmapTopicRequest
 import com.folowise.roadmap.dto.roadmap.MoveRoadmapTopicRequest
+import com.folowise.roadmap.dto.roadmap.UpdateRoadmapTopicStatusRequest
 import com.folowise.roadmap.repository.RoadmapChangeRequestRepository
 import com.folowise.roadmap.repository.RoadmapRepository
 import com.folowise.roadmap.repository.RoadmapTopicRepository
+import com.folowise.roadmap.repository.TraineeProfileRepository
 import com.folowise.roadmap.repository.UserRepository
 import com.folowise.roadmap.security.UserPrincipal
 import org.springframework.stereotype.Service
@@ -29,7 +33,8 @@ class ChangeRequestService(
     private val roadmapRepository: RoadmapRepository,
     private val roadmapTopicRepository: RoadmapTopicRepository,
     private val userRepository: UserRepository,
-    private val roadmapMutationService: RoadmapMutationService
+    private val roadmapMutationService: RoadmapMutationService,
+    private val traineeProfileRepository: TraineeProfileRepository
 ) {
 
     /**
@@ -226,6 +231,53 @@ class ChangeRequestService(
     }
 
     /**
+     * Submits a STATUS_CHANGE change request from a TRAINEE.
+     *
+     * Rules:
+     *  - Roadmap must exist and belong to the current user's trainee profile.
+     *  - Topic must exist and belong to the same roadmap.
+     *  - Status is NOT updated immediately — request is stored as PENDING.
+     */
+    @Transactional
+    fun submitStatusChangeRequest(
+        roadmapId: UUID,
+        request: SubmitStatusChangeRequest,
+        principal: UserPrincipal
+    ): ChangeRequestResponse {
+        val roadmap = roadmapRepository.findById(roadmapId)
+            .orElseThrow { NoSuchElementException("Roadmap not found: $roadmapId") }
+
+        // Validate the roadmap belongs to the current trainee
+        val profile = traineeProfileRepository.findByUserId(principal.id)
+            .orElseThrow { NoSuchElementException("No trainee profile found for current user") }
+        val activeRoadmap = roadmapRepository.findByTraineeIdAndStatus(requireNotNull(profile.id), RoadmapStatus.ACTIVE)
+            .orElseThrow { NoSuchElementException("No active roadmap found") }
+        require(activeRoadmap.id == roadmapId) { "Roadmap does not belong to current user" }
+
+        val topic = roadmapTopicRepository.findById(request.topicId)
+            .orElseThrow { NoSuchElementException("Topic not found: ${request.topicId}") }
+        require(roadmapTopicRepository.existsByIdAndRoadmapId(request.topicId, roadmapId)) {
+            "Topic does not belong to this roadmap"
+        }
+
+        val requestedBy = userRepository.findById(principal.id)
+            .orElseThrow { NoSuchElementException("User not found: ${principal.id}") }
+
+        val changeRequest = RoadmapChangeRequestEntity(
+            roadmap = roadmap,
+            requestedBy = requestedBy,
+            action = ChangeRequestAction.STATUS_CHANGE,
+            description = "Status change for topic: ${topic.title} → ${request.status.name}"
+        ).apply {
+            this.topic = topic
+            this.proposedStatus = request.status
+        }
+
+        val saved = changeRequestRepository.save(changeRequest)
+        return toResponse(saved)
+    }
+
+    /**
      * Returns all PENDING change requests, ordered oldest first (FIFO review queue).
      * Only MANAGER should call this; authorization is enforced at the security layer.
      */
@@ -323,6 +375,20 @@ class ChangeRequestService(
                     request = MoveRoadmapTopicRequest(newParentId = changeRequest.proposedParent?.id)
                 )
             }
+
+            ChangeRequestAction.STATUS_CHANGE -> {
+                val topicId = requireNotNull(changeRequest.topic?.id) {
+                    "STATUS_CHANGE request topic no longer exists"
+                }
+                val proposedStatus = requireNotNull(changeRequest.proposedStatus) {
+                    "STATUS_CHANGE request is missing proposedStatus"
+                }
+                roadmapMutationService.updateTopicStatus(
+                    roadmapId = roadmapId,
+                    topicId = topicId,
+                    request = UpdateRoadmapTopicStatusRequest(status = proposedStatus)
+                )
+            }
         }
 
         changeRequest.status = ChangeRequestStatus.APPROVED
@@ -395,6 +461,7 @@ class ChangeRequestService(
         proposedParentId = entity.proposedParent?.id,
         proposedParentTitle = entity.proposedParent?.title,
         proposedCountable = entity.proposedCountable,
+        proposedStatus = entity.proposedStatus?.name,
         managerNote = entity.managerNote,
         createdAt = entity.createdAt
     )

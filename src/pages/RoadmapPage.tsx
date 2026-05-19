@@ -44,11 +44,22 @@ import {
   ChevronDown,
   ArrowRight
 } from "lucide-react";
-import { mockTrainees, TopicStatus, RoadmapTopic, ResourceType, Resource } from "../data/mockData";
+import { TopicStatus, RoadmapTopic, ResourceType, Resource } from "../data/mockData";
 import { cn } from "../lib/utils";
-import { roadmapApi, changeRequestApi, ApiTopicNode } from "../lib/apiClient";
+import { roadmapApi, changeRequestApi, resourceApi, ApiTopicNode, ApiRoadmapTree } from "../lib/apiClient";
 
-const ROADMAP_ID = '00000000-0000-0000-0000-000000000100';
+// Fallback used only in non-me, non-UUID dev scenarios
+const FALLBACK_ROADMAP_ID = '00000000-0000-0000-0000-000000000100';
+
+const RESOURCE_TYPE_MAP: Record<string, ResourceType> = {
+  YOUTUBE: ResourceType.YouTube,
+  ARTICLE: ResourceType.Article,
+  COURSE: ResourceType.Course,
+  DOCUMENTATION: ResourceType.Documentation,
+  GITHUB: ResourceType.GitHub,
+  NOTES: ResourceType.Notes,
+  OTHER: ResourceType.Other,
+};
 
 const TOPIC_STATUS_MAP: Record<string, TopicStatus> = {
   NOT_STARTED: TopicStatus.NotStarted,
@@ -77,7 +88,31 @@ function mapApiTopic(node: ApiTopicNode): RoadmapTopic {
     isCountable: node.countable,
     parentId: node.parentId ?? undefined,
     children: node.children.length > 0 ? node.children.map(mapApiTopic) : undefined,
+    resources: (node.resources ?? []).map(r => ({
+      id: r.id,
+      title: r.title,
+      type: RESOURCE_TYPE_MAP[r.resourceType] ?? ResourceType.Other,
+      url: r.url ?? undefined,
+      note: r.note ?? undefined,
+      addedBy: r.addedByName,
+      addedDate: '',
+    })),
   };
+}
+
+function applyTreeResponse(
+  data: ApiRoadmapTree,
+  setRoadmapTitle: (t: string) => void,
+  setRoadmapData: (d: RoadmapTopic[]) => void,
+  setTraineeInfo: (info: { name: string; avatarUrl: string | null; specialization: string | null } | null) => void
+): RoadmapTopic[] {
+  const newTopics = data.topics.map(mapApiTopic);
+  setRoadmapTitle(data.title);
+  setRoadmapData(newTopics);
+  if (data.traineeName) {
+    setTraineeInfo({ name: data.traineeName, avatarUrl: data.traineeAvatarUrl, specialization: data.traineeSpecialization });
+  }
+  return newTopics;
 }
 
 type ViewMode = "tree" | "list";
@@ -608,19 +643,19 @@ const DetailPanel = ({
              <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em]">Execution Matrix</h3>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <button 
+            <button
               onClick={() => onEdit(topic)}
               className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-standard hover:border-brand hover:bg-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all text-text-secondary hover:text-brand active:scale-95 shadow-sm"
             >
               <Edit3 size={14} /> {isManager ? "EDIT" : "PROPOSE EDIT"}
             </button>
-            <button 
+            <button
               onClick={() => onDelete(topic)}
               className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-standard hover:border-rose-500 hover:text-rose-500 hover:bg-rose-50 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all text-text-secondary active:scale-95 shadow-sm"
             >
               <Trash2 size={14} /> {isManager ? "DELETE" : "PROPOSE DEL"}
             </button>
-            <button 
+            <button
               onClick={() => onMove(topic)}
               className="flex items-center justify-center gap-2 py-3 bg-surface-soft border border-border-standard hover:border-brand hover:bg-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all text-text-secondary hover:text-brand active:scale-95 shadow-sm"
             >
@@ -654,7 +689,7 @@ const DetailPanel = ({
                   : "bg-brand text-white shadow-brand/30 hover:brightness-110"
               )}
             >
-              <CheckCircle2 size={18} strokeWidth={3} /> {topic.status === TopicStatus.Completed ? "RE-ACTIVATE" : (isManager ? "SYNC STATUS" : "MARK COMPLETE")}
+              <CheckCircle2 size={18} strokeWidth={3} /> {topic.status === TopicStatus.Completed ? "RE-ACTIVATE" : "MARK COMPLETE"}
             </button>
             <button className="flex items-center justify-center gap-2 py-4 bg-surface-soft text-text-secondary rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white border border-transparent hover:border-border-subtle transition-all active:scale-95 shadow-sm">
               <MessageSquare size={18} strokeWidth={2.5} /> FEEDBACK
@@ -669,14 +704,21 @@ const DetailPanel = ({
 
 import { useAuth } from "../App";
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function RoadmapPage() {
   const { role } = useAuth();
   const { id } = useParams();
-  
-  // In trainee mode, always show Alex Rivera's roadmap for prototype
+
   const isTrainee = role === "trainee";
-  const activeTraineeId = isTrainee ? "t1" : (id === "me" || !id ? "t1" : id);
-  const trainee = mockTrainees.find(t => t.id === activeTraineeId) || mockTrainees[0];
+
+  // activeRoadmapId is set from the API response after loading.
+  // For /roadmap/me we don't know the UUID until the API responds.
+  const [activeRoadmapId, setActiveRoadmapId] = useState<string>(
+    (id && UUID_PATTERN.test(id)) ? id : FALLBACK_ROADMAP_ID
+  );
+
+  const [traineeInfo, setTraineeInfo] = useState<{ name: string; avatarUrl: string | null; specialization: string | null } | null>(null);
 
   const [roadmapData, setRoadmapData] = useState<RoadmapTopic[]>([]);
   const [apiLoading, setApiLoading] = useState(true);
@@ -899,17 +941,20 @@ export default function RoadmapPage() {
   }, []);
 
   useEffect(() => {
-    roadmapApi.getTree(ROADMAP_ID)
+    const load = id === 'me' ? roadmapApi.getMyTree() : roadmapApi.getTree(
+      (id && UUID_PATTERN.test(id)) ? id : FALLBACK_ROADMAP_ID
+    );
+    load
       .then((data) => {
-        setRoadmapTitle(data.title);
-        setRoadmapData(data.topics.map(mapApiTopic));
+        setActiveRoadmapId(data.roadmapId);
+        applyTreeResponse(data, setRoadmapTitle, setRoadmapData, setTraineeInfo);
         setApiLoading(false);
       })
       .catch((err: Error) => {
         setApiError(err.message || 'Failed to load roadmap');
         setApiLoading(false);
       });
-  }, []);
+  }, [id]);
 
   const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
@@ -944,18 +989,17 @@ export default function RoadmapPage() {
     setModalError(null);
     try {
       if (isTrainee) {
-        await changeRequestApi.submitAddTopic(ROADMAP_ID, { title, description, parentId, countable });
+        await changeRequestApi.submitAddTopic(activeRoadmapId, { title, description, parentId, countable });
         setActiveModal(null);
-        showToast('Proposal submitted for manager approval', 'info');
+        showToast('Add topic request submitted for manager approval', 'info');
       } else {
-        const updated = await roadmapApi.addTopic(ROADMAP_ID, { title, description, parentId, countable });
-        setRoadmapTitle(updated.title);
-        setRoadmapData(updated.topics.map(mapApiTopic));
+        const updated = await roadmapApi.addTopic(activeRoadmapId, { title, description, parentId, countable });
+        applyTreeResponse(updated, setRoadmapTitle, setRoadmapData, setTraineeInfo);
         setActiveModal(null);
         showToast('Topic added successfully');
       }
     } catch (err: any) {
-      setModalError(err.message || 'Failed to add topic');
+      setModalError(err.message || 'Failed to submit');
     } finally {
       setIsModalSubmitting(false);
     }
@@ -968,24 +1012,21 @@ export default function RoadmapPage() {
     setModalError(null);
     try {
       if (isTrainee) {
-        await changeRequestApi.submitDeleteTopic(ROADMAP_ID, { topicId: modalContext.id });
+        await changeRequestApi.submitDeleteTopic(activeRoadmapId, { topicId: modalContext.id });
         setActiveModal(null);
-        showToast('Request submitted for manager approval', 'info');
-        return;
+        showToast('Delete request submitted for manager approval', 'info');
+      } else {
+        const updated = await roadmapApi.deleteTopic(activeRoadmapId, modalContext.id);
+        const newTopics = applyTreeResponse(updated, setRoadmapTitle, setRoadmapData, setTraineeInfo);
+        if (selectedTopic) {
+          const stillExists = flattenTopics(newTopics).some(t => t.id === selectedTopic.id);
+          if (!stillExists) setSelectedTopic(null);
+        }
+        setActiveModal(null);
+        showToast('Topic deleted successfully');
       }
-      const updated = await roadmapApi.deleteTopic(ROADMAP_ID, modalContext.id);
-      const newTopics = updated.topics.map(mapApiTopic);
-      setRoadmapTitle(updated.title);
-      setRoadmapData(newTopics);
-      // Clear selected topic if it was deleted or was a descendant of the deleted topic
-      if (selectedTopic) {
-        const stillExists = flattenTopics(newTopics).some(t => t.id === selectedTopic.id);
-        if (!stillExists) setSelectedTopic(null);
-      }
-      setActiveModal(null);
-      showToast('Topic deleted successfully');
     } catch (err: any) {
-      setModalError(err.message || 'Failed to delete topic');
+      setModalError(err.message || 'Failed to submit');
     } finally {
       setIsModalSubmitting(false);
     }
@@ -1000,27 +1041,22 @@ export default function RoadmapPage() {
     setModalError(null);
     try {
       if (isTrainee) {
-        await changeRequestApi.submitMoveTopic(ROADMAP_ID, {
-          topicId: modalContext.id,
-          newParentId,
-        });
+        await changeRequestApi.submitMoveTopic(activeRoadmapId, { topicId: modalContext.id, newParentId });
         setActiveModal(null);
-        showToast('Request submitted for manager approval', 'info');
-        return;
+        showToast('Move request submitted for manager approval', 'info');
+      } else {
+        const updated = await roadmapApi.moveTopic(activeRoadmapId, modalContext.id, { newParentId });
+        const newTopics = applyTreeResponse(updated, setRoadmapTitle, setRoadmapData, setTraineeInfo);
+        if (selectedTopic) {
+          const refreshed = flattenTopics(newTopics).find(t => t.id === selectedTopic.id);
+          if (refreshed) setSelectedTopic(refreshed);
+          else setSelectedTopic(null);
+        }
+        setActiveModal(null);
+        showToast('Topic moved successfully');
       }
-      const updated = await roadmapApi.moveTopic(ROADMAP_ID, modalContext.id, { newParentId });
-      const newTopics = updated.topics.map(mapApiTopic);
-      setRoadmapTitle(updated.title);
-      setRoadmapData(newTopics);
-      if (selectedTopic) {
-        const refreshed = flattenTopics(newTopics).find(t => t.id === selectedTopic.id);
-        if (refreshed) setSelectedTopic(refreshed);
-        else setSelectedTopic(null);
-      }
-      setActiveModal(null);
-      showToast('Topic moved successfully');
     } catch (err: any) {
-      setModalError(err.message || 'Failed to move topic');
+      setModalError(err.message || 'Failed to submit');
     } finally {
       setIsModalSubmitting(false);
     }
@@ -1028,12 +1064,10 @@ export default function RoadmapPage() {
 
   const handleStatusChange = async (topic: RoadmapTopic, newStatus: TopicStatus) => {
     try {
-      const updated = await roadmapApi.updateTopicStatus(ROADMAP_ID, topic.id, {
+      const updated = await roadmapApi.updateTopicStatus(activeRoadmapId, topic.id, {
         status: TOPIC_STATUS_BACKEND[newStatus],
       });
-      const newTopics = updated.topics.map(mapApiTopic);
-      setRoadmapTitle(updated.title);
-      setRoadmapData(newTopics);
+      const newTopics = applyTreeResponse(updated, setRoadmapTitle, setRoadmapData, setTraineeInfo);
       if (selectedTopic) {
         const refreshed = flattenTopics(newTopics).find(t => t.id === selectedTopic.id);
         if (refreshed) setSelectedTopic(refreshed);
@@ -1058,29 +1092,21 @@ export default function RoadmapPage() {
     setModalError(null);
     try {
       if (isTrainee) {
-        await changeRequestApi.submitEditTopic(ROADMAP_ID, {
-          topicId: modalContext.id,
-          title,
-          description,
-          countable,
-        });
+        await changeRequestApi.submitEditTopic(activeRoadmapId, { topicId: modalContext.id, title, description, countable });
         setActiveModal(null);
-        showToast('Request submitted for manager approval', 'info');
-        return;
+        showToast('Edit request submitted for manager approval', 'info');
+      } else {
+        const updated = await roadmapApi.editTopic(activeRoadmapId, modalContext.id, { title, description, countable });
+        const newTopics = applyTreeResponse(updated, setRoadmapTitle, setRoadmapData, setTraineeInfo);
+        if (selectedTopic?.id === modalContext.id) {
+          const refreshed = flattenTopics(newTopics).find(t => t.id === modalContext.id);
+          if (refreshed) setSelectedTopic(refreshed);
+        }
+        setActiveModal(null);
+        showToast('Topic updated successfully');
       }
-      const updated = await roadmapApi.editTopic(ROADMAP_ID, modalContext.id, { title, description, countable });
-      const newTopics = updated.topics.map(mapApiTopic);
-      setRoadmapTitle(updated.title);
-      setRoadmapData(newTopics);
-      // Keep the detail panel current if the edited topic is selected
-      if (selectedTopic?.id === modalContext.id) {
-        const refreshed = flattenTopics(newTopics).find(t => t.id === modalContext.id);
-        if (refreshed) setSelectedTopic(refreshed);
-      }
-      setActiveModal(null);
-      showToast('Topic updated successfully');
     } catch (err: any) {
-      setModalError(err.message || 'Failed to update topic');
+      setModalError(err.message || 'Failed to submit');
     } finally {
       setIsModalSubmitting(false);
     }
@@ -1117,15 +1143,15 @@ export default function RoadmapPage() {
           )}
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 rounded-lg p-0.5 bg-white border border-border-standard shadow-md ring-4 ring-brand/5">
-                <img src={trainee.avatar} alt={trainee.name} className="w-full h-full object-cover rounded-[0.45rem]" />
+                <img src={traineeInfo?.avatarUrl ?? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(traineeInfo?.name ?? 'default')}`} alt={traineeInfo?.name ?? 'Roadmap'} className="w-full h-full object-cover rounded-[0.45rem]" />
              </div>
               <div className="space-y-0">
                 <h1 className="text-base font-display font-black text-text-primary leading-tight uppercase tracking-tight">
-                   {isTrainee ? "Strategic Roadmap" : trainee.name}
+                   {traineeInfo?.name ?? roadmapTitle}
                 </h1>
                 <div className="flex items-center gap-2">
                   <span className="w-1 h-1 rounded-full bg-brand animate-pulse shadow-sm shadow-brand" />
-                  <p className="text-[8px] font-black text-brand tracking-[0.2em] uppercase opacity-70">{trainee.specialization}</p>
+                  <p className="text-[8px] font-black text-brand tracking-[0.2em] uppercase opacity-70">{traineeInfo?.specialization ?? ''}</p>
                 </div>
              </div>
           </div>
@@ -1163,7 +1189,7 @@ export default function RoadmapPage() {
             onClick={() => openActionModal("add", virtualRoot)}
             className="flex items-center gap-2 px-4 py-2 bg-brand text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] hover:bg-brand-hover transition-all shadow-lg shadow-brand/10 active:scale-95"
           >
-            <PlusCircle size={14} strokeWidth={3} /> {isTrainee ? "ADD" : "ARCHITECT"}
+            <PlusCircle size={14} strokeWidth={3} /> ARCHITECT
           </button>
         </div>
         
@@ -1292,7 +1318,7 @@ export default function RoadmapPage() {
              <DetailPanel 
                topic={selectedTopic} 
                role={role || "trainee"}
-               traineeName={trainee.name}
+               traineeName={traineeInfo?.name ?? ''}
                onClose={() => setSelectedTopic(null)} 
                onEdit={(t) => openActionModal("edit", t)}
                onDelete={(t) => openActionModal("delete", t)}
@@ -1301,7 +1327,19 @@ export default function RoadmapPage() {
                onCopy={(t) => openActionModal("copy", t)}
                onAddResource={(t) => openActionModal("resource", t)}
                onStatusChange={(t, s) => { void handleStatusChange(t, s); }}
-               onDeleteResource={(tid, rid) => handleAction('resource-delete', { id: tid, resourceId: rid })}
+               onDeleteResource={async (tid, rid) => {
+                 try {
+                   const updated = await resourceApi.delete(activeRoadmapId, tid, rid);
+                   const newTopics = applyTreeResponse(updated, setRoadmapTitle, setRoadmapData, setTraineeInfo);
+                   if (selectedTopic?.id === tid) {
+                     const refreshed = flattenTopics(newTopics).find(t => t.id === tid);
+                     setSelectedTopic(refreshed ?? null);
+                   }
+                   showToast('Resource removed');
+                 } catch (err: any) {
+                   showToast(err.message || 'Failed to remove resource', 'error');
+                 }
+               }}
              />
           </>
         )}
@@ -1445,19 +1483,30 @@ export default function RoadmapPage() {
                     </div>
                   </form>
                 ) : activeModal === "resource" ? (
-                  <form onSubmit={(e) => {
+                  <form onSubmit={async (e) => {
                     e.preventDefault();
+                    if (!modalContext) return;
                     const formData = new FormData(e.currentTarget);
-                    const resource = {
-                      id: Math.random().toString(36).substr(2, 9),
-                      title: formData.get('title') as string,
-                      type: formData.get('type') as ResourceType,
-                      url: formData.get('url') as string,
-                      note: formData.get('note') as string,
-                      addedBy: role === 'manager' ? 'Manager' : trainee.name,
-                      addedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                    };
-                    handleAction('resource-add', { id: modalContext?.id, resource });
+                    const title = (formData.get('title') as string ?? '').trim();
+                    const resourceType = formData.get('type') as string;
+                    const url = (formData.get('url') as string) || undefined;
+                    const note = (formData.get('note') as string) || undefined;
+                    setIsModalSubmitting(true);
+                    setModalError(null);
+                    try {
+                      const updated = await resourceApi.add(activeRoadmapId, modalContext.id, { title, resourceType, url, note });
+                      const newTopics = applyTreeResponse(updated, setRoadmapTitle, setRoadmapData, setTraineeInfo);
+                      if (selectedTopic?.id === modalContext.id) {
+                        const refreshed = flattenTopics(newTopics).find(t => t.id === modalContext.id);
+                        if (refreshed) setSelectedTopic(refreshed);
+                      }
+                      setActiveModal(null);
+                      showToast('Resource added');
+                    } catch (err: any) {
+                      setModalError(err.message || 'Failed to add resource');
+                    } finally {
+                      setIsModalSubmitting(false);
+                    }
                   }} className="space-y-5">
                     <div className="space-y-4">
                       <div className="space-y-1.5">
@@ -1467,11 +1516,11 @@ export default function RoadmapPage() {
                       <div className="space-y-1.5">
                         <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">Category</label>
                         <div className="grid grid-cols-4 gap-1.5">
-                           {Object.values(ResourceType).map(type => (
-                             <label key={type} className="relative cursor-pointer group">
-                               <input type="radio" name="type" value={type} required className="peer sr-only" defaultChecked={type === ResourceType.Article} />
+                           {Object.entries(RESOURCE_TYPE_MAP).map(([backendKey, displayValue]) => (
+                             <label key={backendKey} className="relative cursor-pointer group">
+                               <input type="radio" name="type" value={backendKey} required className="peer sr-only" defaultChecked={backendKey === 'ARTICLE'} />
                                <div className="px-1 py-2 bg-slate-50 border border-border-standard rounded-lg text-[7px] font-black uppercase tracking-widest text-text-secondary text-center peer-checked:border-brand peer-checked:text-brand peer-checked:bg-brand/5 transition-all shadow-sm group-hover:bg-white truncate">
-                                 {type}
+                                 {displayValue}
                                </div>
                              </label>
                            ))}
@@ -1481,7 +1530,7 @@ export default function RoadmapPage() {
                         <label className="text-[8px] font-black text-text-tertiary uppercase tracking-[0.2em] ml-0.5">URL</label>
                         <div className="relative group">
                           <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary" size={12} />
-                          <input name="url" required type="url" placeholder="https://..." className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-border-standard rounded-lg text-xs font-medium outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all focus:bg-white shadow-sm" />
+                          <input name="url" type="url" placeholder="https://..." className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-border-standard rounded-lg text-xs font-medium outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all focus:bg-white shadow-sm" />
                         </div>
                       </div>
                       <div className="space-y-1.5">
@@ -1489,9 +1538,14 @@ export default function RoadmapPage() {
                         <textarea name="note" rows={2} placeholder="Optional study context..." className="w-full px-4 py-2 bg-slate-50 border border-border-standard rounded-lg text-[10px] font-medium text-text-secondary outline-none focus:ring-4 focus:ring-brand/[0.04] focus:border-brand/40 transition-all shadow-sm focus:bg-white resize-none" />
                       </div>
                     </div>
+                    {modalError && (
+                      <div className="px-4 py-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-[10px] font-black uppercase tracking-[0.15em]">
+                        {modalError}
+                      </div>
+                    )}
                     <div className="flex gap-2">
-                       <button type="button" onClick={() => setActiveModal(null)} className="flex-1 py-2.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm active:scale-95 transition-all hover:bg-slate-50">ABORT</button>
-                       <button type="submit" className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all">LINK KNOWLEDGE</button>
+                       <button type="button" onClick={() => setActiveModal(null)} disabled={isModalSubmitting} className="flex-1 py-2.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm active:scale-95 transition-all hover:bg-slate-50 disabled:opacity-60 disabled:pointer-events-none">ABORT</button>
+                       <button type="submit" disabled={isModalSubmitting} className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all disabled:opacity-60 disabled:pointer-events-none">{isModalSubmitting ? 'LINKING...' : 'LINK KNOWLEDGE'}</button>
                     </div>
                   </form>
                 ) : activeModal === "copy" ? (
@@ -1590,9 +1644,7 @@ export default function RoadmapPage() {
                       >
                         {isModalSubmitting
                           ? (activeModal === 'edit' ? 'UPDATING...' : 'COMMITTING...')
-                          : activeModal === "edit"
-                            ? (role === "manager" ? "SAVE CHANGES" : "PROPOSE CHANGES")
-                            : (role === "manager" ? "COMMIT TO PATH" : "SUBMIT PROPOSAL")}
+                          : activeModal === "edit" ? "SAVE CHANGES" : "COMMIT TO PATH"}
                       </button>
                     </div>
                   </form>
