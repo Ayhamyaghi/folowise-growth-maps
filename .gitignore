@@ -1,13 +1,39 @@
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+
+# ─── Environment files ────────────────────────────────────────────────────────
+.env*
+!.env.example
+!apps/backend/.env.example
+
+# ─── Claude Code ──────────────────────────────────────────────────────────────
+.claude/
+
+# ─── Frontend (apps/web) ──────────────────────────────────────────────────────
+apps/web/node_modules/
+apps/web/dist/
+apps/web/coverage/
+apps/web/.env*
+!apps/web/.env.example
+
+# ─── Backend (apps/backend) ───────────────────────────────────────────────────
+apps/backend/.gradle/
+apps/backend/build/
+apps/backend/.env*
+!apps/backend/.env.example
+
+# ─── Root-level leftovers (safety net) ───────────────────────────────────────
 node_modules/
 build/
 dist/
 coverage/
-.DS_Store
-*.log
-.env*
-!.env.example
-
-.claude/
-.gradle/
-**/.gradle/
-.idea/
+backend/
