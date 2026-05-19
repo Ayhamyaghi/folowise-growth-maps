@@ -642,6 +642,14 @@ const DetailPanel = ({
              <Settings size={14} className="text-text-tertiary" />
              <h3 className="text-[10px] font-black text-text-tertiary uppercase tracking-[0.2em]">Execution Matrix</h3>
           </div>
+          {!isManager && (
+            <div className="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+              <GitBranch size={13} className="text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-[9px] font-bold text-amber-800 leading-relaxed">
+                Structural changes are submitted as proposals for manager review.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => onEdit(topic)}
@@ -1114,16 +1122,42 @@ export default function RoadmapPage() {
 
   if (apiLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-background-app">
-        <div className="text-text-secondary text-sm font-medium uppercase tracking-widest">Loading roadmap...</div>
+      <div className="h-screen flex flex-col items-center justify-center bg-background-app gap-6">
+        <div className="relative">
+          <div className="w-14 h-14 rounded-2xl bg-brand/10 border-2 border-brand/20 flex items-center justify-center">
+            <div className="w-7 h-7 border-[3px] border-brand/30 border-t-brand rounded-full animate-spin" />
+          </div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-text-tertiary">Loading roadmap</p>
+          <div className="flex gap-1">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-brand/30 animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (apiError) {
     return (
-      <div className="h-screen flex items-center justify-center bg-background-app">
-        <div className="text-red-500 text-sm font-medium uppercase tracking-widest">Error: {apiError}</div>
+      <div className="h-screen flex items-center justify-center bg-background-app p-6">
+        <div className="flex flex-col items-center gap-5 text-center max-w-sm">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center">
+            <AlertCircle size={28} className="text-rose-400" />
+          </div>
+          <div>
+            <p className="text-sm font-black text-text-primary uppercase tracking-tight mb-1">Failed to load roadmap</p>
+            <p className="text-xs font-medium text-text-secondary leading-relaxed">{apiError}</p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 bg-brand text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-lg shadow-brand/20 active:scale-95"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -1213,9 +1247,43 @@ export default function RoadmapPage() {
 
       {/* Roadmap Canvas Area */}
       <main className="flex-1 relative overflow-auto bg-background-app custom-scrollbar selection:bg-brand/10 select-none transition-colors duration-500" ref={containerRef}>
-        
+
         <AnimatePresence mode="wait">
-          {viewMode === "tree" ? (
+          {roadmapData.length === 0 ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-7"
+            >
+              <div className="absolute inset-0 pointer-events-none opacity-[0.04]"
+                style={{ backgroundImage: 'radial-gradient(circle, #5B57F5 1px, transparent 1px)', backgroundSize: '64px 64px' }}
+              />
+              <div className="flex flex-col items-center gap-5 text-center max-w-sm relative z-10">
+                <div className="w-20 h-20 rounded-2xl bg-white border border-border-standard shadow-card flex items-center justify-center">
+                  <GitBranch size={32} className="text-brand opacity-40" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-lg font-display font-black text-text-primary uppercase tracking-tight mb-2">
+                    No topics yet
+                  </p>
+                  <p className="text-xs font-medium text-text-secondary leading-relaxed opacity-70">
+                    {isTrainee
+                      ? "Your roadmap is empty. Submit a request to add the first topic."
+                      : "Start building this roadmap by adding the first topic."}
+                  </p>
+                </div>
+                <button
+                  onClick={() => openActionModal("add", virtualRoot)}
+                  className="flex items-center gap-2 px-5 py-3 bg-brand text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-xl shadow-brand/20 active:scale-95"
+                >
+                  <PlusCircle size={14} strokeWidth={3} />
+                  {isTrainee ? "PROPOSE FIRST TOPIC" : "ADD FIRST TOPIC"}
+                </button>
+              </div>
+            </motion.div>
+          ) : viewMode === "tree" ? (
             <motion.div 
               key="tree"
               initial={{ opacity: 0, scale: 0.98 }}
@@ -1409,14 +1477,23 @@ export default function RoadmapPage() {
                   </div>
                 </div>
 
+                {isTrainee && ['add', 'edit', 'delete', 'move'].includes(activeModal ?? '') && (
+                  <div className="flex items-center gap-2.5 p-3 bg-amber-50 border border-amber-100 rounded-xl mb-5">
+                    <GitBranch size={13} className="text-amber-600 shrink-0" />
+                    <p className="text-[9px] font-bold text-amber-800 leading-relaxed">
+                      This will submit a change request for manager approval.
+                    </p>
+                  </div>
+                )}
+
                 {activeModal === "delete" ? (
                   <div className="space-y-5">
                     <div className="p-4 bg-rose-50 rounded-xl border border-rose-100 shadow-inner">
                       <p className="text-xs font-medium text-rose-900 leading-relaxed">
-                        Are you sure you want to remove <span className="font-bold underline">{modalContext?.title}</span>?
+                        Are you sure you want to {isTrainee ? 'propose removing' : 'remove'} <span className="font-bold underline">{modalContext?.title}</span>?
                       </p>
                       <p className="text-[9px] font-black text-rose-700/60 uppercase tracking-widest mt-2">
-                        DANGER: Deleting this topic will also delete all nested subtopics under it.
+                        {isTrainee ? 'This will create a deletion request for manager review.' : 'DANGER: Deleting this topic will also delete all nested subtopics under it.'}
                       </p>
                     </div>
                     {modalError && (
@@ -1437,7 +1514,7 @@ export default function RoadmapPage() {
                         disabled={isModalSubmitting}
                         className="flex-1 py-2.5 bg-rose-500 text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-rose-500/20 hover:brightness-110 active:scale-95 transition-all disabled:opacity-60 disabled:pointer-events-none"
                       >
-                        {isModalSubmitting ? 'DELETING...' : 'EXECUTE DELETE'}
+                        {isModalSubmitting ? (isTrainee ? 'SUBMITTING...' : 'DELETING...') : (isTrainee ? 'SUBMIT PROPOSAL' : 'EXECUTE DELETE')}
                       </button>
                     </div>
                   </div>
@@ -1479,7 +1556,7 @@ export default function RoadmapPage() {
                     )}
                     <div className="flex gap-2 pt-1">
                        <button type="button" onClick={() => setActiveModal(null)} disabled={isModalSubmitting} className="flex-1 py-2.5 bg-white text-text-secondary font-black text-[9px] uppercase tracking-widest rounded-lg border border-border-standard shadow-sm active:scale-95 transition-all hover:bg-slate-50 disabled:opacity-60 disabled:pointer-events-none">CANCEL</button>
-                       <button type="submit" disabled={isModalSubmitting} className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all disabled:opacity-60 disabled:pointer-events-none">{isModalSubmitting ? 'MOVING...' : 'MIGRATE NODE'}</button>
+                       <button type="submit" disabled={isModalSubmitting} className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all disabled:opacity-60 disabled:pointer-events-none">{isModalSubmitting ? (isTrainee ? 'SUBMITTING...' : 'MOVING...') : (isTrainee ? 'SUBMIT PROPOSAL' : 'MIGRATE NODE')}</button>
                     </div>
                   </form>
                 ) : activeModal === "resource" ? (
@@ -1643,8 +1720,10 @@ export default function RoadmapPage() {
                         className="flex-1 py-2.5 bg-brand text-white font-black text-[9px] uppercase tracking-widest rounded-lg shadow-lg shadow-brand/20 active:scale-95 transition-all disabled:opacity-60 disabled:pointer-events-none"
                       >
                         {isModalSubmitting
-                          ? (activeModal === 'edit' ? 'UPDATING...' : 'COMMITTING...')
-                          : activeModal === "edit" ? "SAVE CHANGES" : "COMMIT TO PATH"}
+                          ? (isTrainee ? 'SUBMITTING...' : activeModal === 'edit' ? 'UPDATING...' : 'COMMITTING...')
+                          : isTrainee
+                            ? (activeModal === 'edit' ? 'SUBMIT EDIT REQUEST' : 'SUBMIT ADD REQUEST')
+                            : activeModal === 'edit' ? 'SAVE CHANGES' : 'COMMIT TO PATH'}
                       </button>
                     </div>
                   </form>
